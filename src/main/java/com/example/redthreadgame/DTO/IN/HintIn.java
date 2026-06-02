@@ -8,8 +8,8 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class HintIN {
+public class HintIn {
 
-    @NotEmpty(message = "Content is required")
+    @NotEmpty(message = "Content must not be empty")
     private String content;
 }

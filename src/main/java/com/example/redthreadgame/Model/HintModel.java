@@ -15,11 +15,11 @@ public class HintModel {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(columnDefinition = "varchar(500) not null")
     private String content;
 
-    // TODO: uncomment when GameSession is ready
-    // @ManyToOne
-    // @JoinColumn(name = "game_session_id")
-    // private GameSession gameSession;
+//    @ManyToOne
+//    @JoinColumn(name = "game_session_id", referencedColumnName = "id")
+//    @JsonIgnore
+//    private GameSessionModel gameSession;
 }
