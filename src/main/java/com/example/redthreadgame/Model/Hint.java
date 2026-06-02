@@ -9,7 +9,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 
-public class HintModel {
+public class Hint {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
