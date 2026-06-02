@@ -1,16 +1,11 @@
 package com.example.redthreadgame.Service;
 
 import com.example.redthreadgame.Api.ApiException;
-import com.example.redthreadgame.DTO.IN.SolutionProposalIn;
-import com.example.redthreadgame.DTO.OUT.SolutionProposalOut;
-import com.example.redthreadgame.Model.SolutionProposalModel;
+import com.example.redthreadgame.Model.SolutionProposal;
 import com.example.redthreadgame.Repository.SolutionProposalRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -42,7 +37,7 @@ public class SolutionProposalService {
 //        SuspectModel suspect = suspectRepository.findById(suspectId)
 //                .orElseThrow(() -> new ApiException("Suspect not found"));
 //
-//        SolutionProposalModel proposal = modelMapper.map(dto, SolutionProposalModel.class);
+//        SolutionProposalModel proposal = modelMapper.map(dto, SolutionProposal.class);
 //        proposal.setStatus("PENDING");
 //        proposal.setAcceptCount(0);
 //        proposal.setRejectCount(0);
@@ -54,7 +49,7 @@ public class SolutionProposalService {
 //    }
 
     public void acceptProposal(Integer proposalId) {
-        SolutionProposalModel proposal = solutionProposalRepository.findById(proposalId)
+        SolutionProposal proposal = solutionProposalRepository.findById(proposalId)
                 .orElseThrow(() -> new ApiException("Solution proposal not found"));
 
         proposal.setAcceptCount(proposal.getAcceptCount() + 1);
@@ -62,7 +57,7 @@ public class SolutionProposalService {
     }
 
     public void rejectProposal(Integer proposalId) {
-        SolutionProposalModel proposal = solutionProposalRepository.findById(proposalId)
+        SolutionProposal proposal = solutionProposalRepository.findById(proposalId)
                 .orElseThrow(() -> new ApiException("Solution proposal not found"));
 
         proposal.setRejectCount(proposal.getRejectCount() + 1);
@@ -70,7 +65,7 @@ public class SolutionProposalService {
     }
 
     public void changeStatus(Integer proposalId, String status) {
-        SolutionProposalModel proposal = solutionProposalRepository.findById(proposalId)
+        SolutionProposal proposal = solutionProposalRepository.findById(proposalId)
                 .orElseThrow(() -> new ApiException("Solution proposal not found"));
 
         proposal.setStatus(status);

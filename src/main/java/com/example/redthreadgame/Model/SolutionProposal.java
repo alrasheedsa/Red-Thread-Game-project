@@ -9,7 +9,7 @@ import lombok.*;
 @NoArgsConstructor
 @Getter
 @Setter
-public class SolutionProposalModel {
+public class SolutionProposal {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
