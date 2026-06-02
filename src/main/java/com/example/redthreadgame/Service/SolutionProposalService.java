@@ -1,5 +1,4 @@
 package com.example.redthreadgame.Service;
-
 import com.example.redthreadgame.Api.ApiException;
 import com.example.redthreadgame.Model.SolutionProposal;
 import com.example.redthreadgame.Repository.SolutionProposalRepository;
@@ -20,7 +19,7 @@ public class SolutionProposalService {
 //    public List<SolutionProposalOut> getProposalsByGameSession(Integer gameSessionId) {
 //        List<SolutionProposalOut> proposals = new ArrayList<>();
 //
-//        for (SolutionProposalModel s : solutionProposalRepository.findAllByGameSessionId(gameSessionId)) {
+//        for (SolutionProposal s : solutionProposalRepository.findAllByGameSessionId(gameSessionId)) {
 //            proposals.add(modelMapper.map(s, SolutionProposalOut.class));
 //        }
 //
@@ -37,7 +36,7 @@ public class SolutionProposalService {
 //        SuspectModel suspect = suspectRepository.findById(suspectId)
 //                .orElseThrow(() -> new ApiException("Suspect not found"));
 //
-//        SolutionProposalModel proposal = modelMapper.map(dto, SolutionProposal.class);
+//        SolutionProposal proposal = modelMapper.map(dto, SolutionProposal.class);
 //        proposal.setStatus("PENDING");
 //        proposal.setAcceptCount(0);
 //        proposal.setRejectCount(0);
