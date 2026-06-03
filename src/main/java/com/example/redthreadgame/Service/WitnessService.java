@@ -3,6 +3,7 @@ package com.example.redthreadgame.Service;
 import com.example.redthreadgame.Api.ApiException;
 import com.example.redthreadgame.DTO.IN.WitnessIn;
 import com.example.redthreadgame.DTO.OUT.WitnessOut;
+import com.example.redthreadgame.Model.Case;
 import com.example.redthreadgame.Model.Witness;
 import com.example.redthreadgame.Repository.WitnessRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +18,7 @@ import java.util.List;
 public class WitnessService {
     private final ModelMapper modelMapper;
     private final WitnessRepository witnessRepository;
-    // private final CaseService caseService;
+    private final CaseService caseService;
 
     public List<WitnessOut> getAllWitnesses() {
         List<WitnessOut> witnesses = new ArrayList<>();
@@ -27,10 +28,11 @@ public class WitnessService {
         return witnesses;
     }
 
-    public void addWitness(Integer caseId, WitnessIn dto) {
-        // Case c = caseService.checkCase(caseId);
-        Witness witness = modelMapper.map(dto, Witness.class);
-        // witness.setCaseEntity(c);
+    public void addWitness(Integer caseId, WitnessIn dto){
+        Case c = caseService.checkCase(caseId);
+        Witness witness= modelMapper.map(dto, Witness.class);
+        witness.setWitnessCase(c);
+
         witnessRepository.save(witness);
     }
 
@@ -39,20 +41,22 @@ public class WitnessService {
         old.setName(dto.getName());
         old.setStatement(dto.getStatement());
         old.setReliabilityScore(dto.getReliabilityScore());
+
         witnessRepository.save(old);
     }
 
-    public void deleteWitness(Integer id) {
+   public void deleteWitness(Integer id){
         witnessRepository.delete(checkWitness(id));
+   }
+    public List<WitnessOut> getWitnessesDetails(Integer caseId) {
+        caseService.checkCase(caseId);
+        List<WitnessOut> witnesses = new ArrayList<>();
+        for (Witness w : witnessRepository.findWitnessesByWitnessCaseId(caseId)) {
+            witnesses.add(modelMapper.map(w, WitnessOut.class));
+
+        }
+        return witnesses;
     }
-    // public List<WitnessOut> getWitnessesByCaseId(Integer caseId) {
-    //     caseService.checkCase(caseId);
-    //     List<WitnessOut> witnesses = new ArrayList<>();
-    //     for (Witness w : witnessRepository.findWitnessesByCaseEntityId(caseId)) {
-    //         witnesses.add(modelMapper.map(w, WitnessOut.class));
-    //     }
-    //     return witnesses;
-    // }
 
 
     private Witness checkWitness(Integer id) {
@@ -61,5 +65,4 @@ public class WitnessService {
             throw new ApiException("Witness not found");
         return witness;
     }
-
 }

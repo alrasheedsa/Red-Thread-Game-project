@@ -12,5 +12,5 @@ public interface WitnessRepository extends JpaRepository<Witness, Integer> {
     Witness findWitnessById(Integer id);
 
     // جلب كل شهود قضية معينة
-   // List<Witness> findWitnessesByCaseEntityId(Integer caseId);
+    List<Witness> findWitnessesByWitnessCaseId(Integer caseId);
 }

@@ -17,7 +17,7 @@ public class WitnessController {
     private final WitnessService witnessService;
 
 
-    @GetMapping
+    @GetMapping("/get")
     public ResponseEntity<?> getAllWitnesses() {
         return ResponseEntity.ok(witnessService.getAllWitnesses());
     }
@@ -39,8 +39,8 @@ public class WitnessController {
         witnessService.deleteWitness(id);
         return ResponseEntity.ok(new ApiResponse("Witness deleted successfully"));
     }
-    // @GetMapping("/case/{caseId}")
-    // public ResponseEntity<List<WitnessOut>> getWitnessesByCase(@PathVariable Integer caseId) {
-    //     return ResponseEntity.ok(witnessService.getWitnessesByCaseId(caseId));
-    // }
+     @GetMapping("/case/{caseId}")
+     public ResponseEntity<?> getWitnessesDetails(@PathVariable Integer caseId) {
+         return ResponseEntity.ok(witnessService.getWitnessesDetails(caseId));
+     }
 }
