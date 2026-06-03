@@ -70,6 +70,8 @@ public class GameSessionService {
         else if(gameSession.getStatus().equalsIgnoreCase("IN_PROGRESS"))
             gameSession.setStatus("COMPLETED");
         else throw new ApiException("game session is completed you cannot change the status");
+
+        gameSessionRepository.save(gameSession);
     }
 
 

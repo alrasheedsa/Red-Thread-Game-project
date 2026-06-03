@@ -42,6 +42,6 @@ public class GameSessionController {
     @PutMapping("/update-status/{id}")
     public ResponseEntity<?> updateStatus(@PathVariable Integer id){
         gameSessionService.updateStatus(id);
-        return ResponseEntity.status(200).body(new ApiResponse("Game Session updated successfully"));
+        return ResponseEntity.status(200).body(new ApiResponse("Game Session status updated successfully"));
     }
 }
