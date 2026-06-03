@@ -19,17 +19,17 @@ public class NoteController {
     public ResponseEntity<?> getAllNotes() {
         return ResponseEntity.status(200).body(noteService.getAllNotes());
     }
-//
-//    @GetMapping("/get-by-session/{gameSessionId}")
-//    public ResponseEntity<?> getNotesByGameSession(@PathVariable Integer gameSessionId) {
-//        return ResponseEntity.status(200).body(noteService.getNotesByGameSession(gameSessionId));
-//    }
-//
-//    @PostMapping("/add/{gameSessionId}/{playerId}")
-//    public ResponseEntity<?> addNote(@PathVariable Integer gameSessionId, @PathVariable Integer playerId, @RequestBody @Valid NoteIn dto) {
-//        noteService.addNote(gameSessionId, playerId, dto);
-//        return ResponseEntity.status(200).body(new ApiResponse("Note added successfully"));
-//    }
+
+    @GetMapping("/get-by-session/{gameSessionId}")
+    public ResponseEntity<?> getNotesByGameSession(@PathVariable Integer gameSessionId) {
+        return ResponseEntity.status(200).body(noteService.getNotesByGameSession(gameSessionId));
+    }
+
+    @PostMapping("/add/{gameSessionId}/{playerId}")
+    public ResponseEntity<?> addNote(@PathVariable Integer gameSessionId, @PathVariable Integer playerId, @RequestBody @Valid NoteIn dto) {
+        noteService.addNote(gameSessionId, playerId, dto);
+        return ResponseEntity.status(200).body(new ApiResponse("Note added successfully"));
+    }
 
     @PutMapping("/update/{noteId}")
     public ResponseEntity<?> updateNote(@PathVariable Integer noteId, @RequestBody @Valid NoteIn dto) {

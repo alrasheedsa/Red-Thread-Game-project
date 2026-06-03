@@ -13,6 +13,6 @@ public class NoteOut {
     private String content;
 
     // TODO: add after relations are ready
-    // private Integer gameSessionId;
-    // private String playerName;
+     private Integer gameSessionId;
+     private String playerName;
 }
