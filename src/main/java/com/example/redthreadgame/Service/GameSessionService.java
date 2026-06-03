@@ -5,8 +5,10 @@ import com.example.redthreadgame.DTO.IN.GameSessionIn;
 import com.example.redthreadgame.DTO.OUT.GameSessionOut;
 import com.example.redthreadgame.Model.Case;
 import com.example.redthreadgame.Model.GameSession;
+import com.example.redthreadgame.Model.Player;
 import com.example.redthreadgame.Repository.CaseRepository;
 import com.example.redthreadgame.Repository.GameSessionRepository;
+import com.example.redthreadgame.Repository.PlayerRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -21,6 +23,7 @@ public class GameSessionService {
     private final ModelMapper modelMapper;
     private final GameSessionRepository gameSessionRepository;
     private final CaseRepository caseRepository;
+    private final PlayerRepository playerRepository;
 
 
     //BASIC CRUD
@@ -32,11 +35,13 @@ public class GameSessionService {
         return gameSessions;
     }
 
-    public void addGameSession(Integer caseId,GameSessionIn gameSessionIn){
+    public void addGameSession(Integer caseId,Integer playerId,GameSessionIn gameSessionIn){
         Case sessionCase = checkCase(caseId);
+        Player player = checkPlayer(playerId);
 
         GameSession gameSession = modelMapper.map(gameSessionIn, GameSession.class);
         gameSession.setSessionCase(sessionCase);
+        gameSession.setOwner(player);
         gameSession.setStatus("PENDING");
 
         gameSessionRepository.save(gameSession);
@@ -81,5 +86,11 @@ public class GameSessionService {
         if(sessionCase == null) throw new ApiException("Case not found"); //check case
 
         return sessionCase;
+    }
+    private Player checkPlayer(Integer id){
+        Player player = playerRepository.findPlayerById(id);
+        if(player == null) throw new ApiException("player not found"); //check player
+
+        return player;
     }
 }

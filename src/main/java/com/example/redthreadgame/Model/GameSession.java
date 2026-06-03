@@ -30,6 +30,9 @@ public class GameSession {
     @Column(columnDefinition = "boolean", nullable = false)
     private Boolean isPrivate;
 
+    @Column(columnDefinition = "varchar(6)")
+    private String sessionCode;
+
     @Column(columnDefinition = "int", nullable = false)
     private Integer playersCount;
 

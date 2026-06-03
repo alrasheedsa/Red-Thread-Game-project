@@ -21,9 +21,9 @@ public class GameSessionController {
         return ResponseEntity.status(200).body(gameSessionService.getAllGameSessions());
     }
 
-    @PostMapping("/add/{caseId}")
-    public ResponseEntity<?> addGameSession(@PathVariable Integer caseId, @RequestBody @Valid GameSessionIn gameSession){
-        gameSessionService.addGameSession(caseId ,gameSession);
+    @PostMapping("/add/{caseId}/{playerId}")
+    public ResponseEntity<?> addGameSession(@PathVariable Integer caseId,@PathVariable Integer playerId, @RequestBody @Valid GameSessionIn gameSession){
+        gameSessionService.addGameSession(caseId ,playerId,gameSession);
         return ResponseEntity.status(200).body(new ApiResponse("Game Session added successfully"));
     }
 

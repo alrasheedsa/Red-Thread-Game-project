@@ -15,6 +15,7 @@ public class GameSessionOut {
     private Integer id;
     private String status;
     private Boolean isPrivate;
+    private String sessionCode;
     private Integer playersCount;
     private Integer questionsCount;
     private Integer score;
