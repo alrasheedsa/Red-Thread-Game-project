@@ -10,7 +10,4 @@ import lombok.NoArgsConstructor;
 public class HintOut {
     private Integer id;
     private String content;
-
-    // TODO: add after relations are ready
-    // private Integer gameSessionId;
 }
