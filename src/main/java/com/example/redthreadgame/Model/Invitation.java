@@ -21,7 +21,7 @@ public class Invitation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(columnDefinition = "varchar(20) check (status = 'PENDING' or status = 'ACCEPTED' or status = 'REJECTED')", nullable = false)
+    @Column(columnDefinition = "varchar(20) check (status = 'PENDING' or status = 'ACCEPTED' or status = 'REJECTED' or status = 'JOINED')", nullable = false)
     private String status;
 
     @ManyToOne
