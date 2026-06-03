@@ -53,4 +53,7 @@ public class Player {
     @JsonIgnore
     private Set<SolutionProposal> solutionProposals;
 
+    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL)
+    @JsonIgnore
+    private Set<GameSession> gameSessions;
 }
