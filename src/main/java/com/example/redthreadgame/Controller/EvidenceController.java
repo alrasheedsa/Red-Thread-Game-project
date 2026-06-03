@@ -14,28 +14,28 @@ import org.springframework.web.bind.annotation.*;
 public class EvidenceController {
     private final EvidenceService evidenceService;
 
-    @GetMapping("get")
+    @GetMapping("/get")
     public ResponseEntity<?> getAllEvidences() {
         return ResponseEntity.ok(evidenceService.getAllEvidences());
     }
-    @PostMapping("add/{caseId}")
+    @PostMapping("/add/{caseId}")
     public ResponseEntity<?> addEvidence(@PathVariable Integer caseId, @RequestBody @Valid EvidenceIn dto) {
         evidenceService.addEvidence(caseId, dto);
-        return ResponseEntity.status(201).body(new ApiResponse("Evidence added successfully"));
+        return ResponseEntity.status(200).body(new ApiResponse("Evidence added successfully"));
     }
-    @PutMapping("update/{id}")
+    @PutMapping("/update/{id}")
     public ResponseEntity<?> updateEvidence(@PathVariable Integer id, @RequestBody @Valid EvidenceIn dto) {
         evidenceService.updateEvidence(id, dto);
         return ResponseEntity.ok(new ApiResponse("Evidence updated successfully"));
     }
 
-    @DeleteMapping("delete/{id}")
+    @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> deleteEvidence(@PathVariable Integer id) {
         evidenceService.deleteEvidence(id);
         return ResponseEntity.ok(new ApiResponse("Evidence deleted successfully"));
     }
-    // @GetMapping("/case/{caseId}")
-    // public ResponseEntity<List<EvidenceOut>> getEvidencesByCase(@PathVariable Integer caseId) {
-    //     return ResponseEntity.ok(evidenceService.getEvidencesByCaseId(caseId));
-    // }
+    @GetMapping("/case/{caseId}")
+    public ResponseEntity<?> getEvidencesDetails(@PathVariable Integer caseId) {
+        return ResponseEntity.ok(evidenceService.getEvidencesDetails(caseId));
+    }
 }
