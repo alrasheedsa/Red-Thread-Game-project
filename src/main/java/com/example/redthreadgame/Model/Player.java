@@ -14,6 +14,7 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
+@Table(name = "player")
 public class Player {
 
     @Id
@@ -28,6 +29,9 @@ public class Player {
 
     @Column(columnDefinition = "varchar(50)", nullable = false, unique = true)
     private String email;
+
+    @Column(columnDefinition = "varchar(10)", nullable = false, unique = true)
+    private String phoneNumber;
 
     @Column(columnDefinition = "varchar(50)", nullable = false)
     private String password;
@@ -49,4 +53,7 @@ public class Player {
     @JsonIgnore
     private Set<SolutionProposal> solutionProposals;
 
+    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL)
+    @JsonIgnore
+    private Set<GameSession> gameSessions;
 }
