@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.Set;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -25,8 +27,12 @@ public class Suspect {
     @Column(nullable = false)
     private Integer age;
 
-//    @ManyToOne
-//    @JoinColumn(name = "case_id")
-//    @JsonIgnore
-//    private Case caseEntity;
+    @ManyToOne
+    @JoinColumn(name = "case_id")
+    @JsonIgnore
+    private Case suspectCase;;
+
+    @OneToMany(mappedBy = "suspect", cascade = CascadeType.ALL)
+    @JsonIgnore
+    private Set<SolutionProposal> solutionProposal;
 }

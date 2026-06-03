@@ -1,4 +1,5 @@
 package com.example.redthreadgame.Model;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -18,8 +19,8 @@ public class Hint {
     @Column(columnDefinition = "varchar(500) not null")
     private String content;
 
-//    @ManyToOne
-//    @JoinColumn(name = "game_session_id", referencedColumnName = "id")
-//    @JsonIgnore
-//    private GameSessionModel gameSession;
+    @ManyToOne
+    @JoinColumn(name = "game_session_id", referencedColumnName = "id")
+    @JsonIgnore
+    private GameSession gameSession;
 }

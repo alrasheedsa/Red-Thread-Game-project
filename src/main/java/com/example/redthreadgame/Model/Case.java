@@ -7,6 +7,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
+import java.util.Set;
+
 @Setter
 @Getter
 @NoArgsConstructor
@@ -35,19 +38,20 @@ public class Case {
 //    @JsonIgnore
 //    private Admin admin;
 
-//    @OneToMany(mappedBy = "caseEntity", cascade = CascadeType.ALL)
-//    private List<Witness> witnesses;
-//
-//    @OneToMany(mappedBy = "caseEntity", cascade = CascadeType.ALL)
-//    private List<Suspect> suspects;
-//
-//    @OneToMany(mappedBy = "caseEntity", cascade = CascadeType.ALL)
-//    private List<Evidence> evidences;
+    @OneToMany(mappedBy = "witnessCase", cascade = CascadeType.ALL)
+    private Set<Witness> witnesses;
 
-    // OneToOne
-//    @OneToOne(mappedBy = "caseEntity", cascade = CascadeType.ALL)
-//    private CaseSolution caseSolution;
+    @OneToMany(mappedBy = "suspectCase", cascade = CascadeType.ALL)
+    private Set<Suspect> suspects;
 
-    // @OneToMany(mappedBy = "caseEntity", cascade = CascadeType.ALL)
-    //private List<GameSession> gameSessions;
+    @OneToMany(mappedBy = "evidenceCase", cascade = CascadeType.ALL)
+    private Set<Evidence> evidences;
+
+    @OneToOne(mappedBy = "solutionCase", cascade = CascadeType.ALL)
+    @JsonIgnore
+    private CaseSolution caseSolution;
+
+    @OneToMany(mappedBy = "sessionCase", cascade = CascadeType.ALL)
+    @JsonIgnore
+    private Set<GameSession> gameSessions;
 }

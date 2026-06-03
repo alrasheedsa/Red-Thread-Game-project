@@ -1,0 +1,57 @@
+package com.example.redthreadgame.Service;
+
+import com.example.redthreadgame.Api.ApiException;
+import com.example.redthreadgame.DTO.IN.CaseSolutionIn;
+import com.example.redthreadgame.DTO.OUT.CaseSolutionOut;
+import com.example.redthreadgame.Model.CaseSolution;
+import com.example.redthreadgame.Repository.CaseSolutionRepository;
+import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
+import org.springframework.stereotype.Service;
+
+@Service
+@RequiredArgsConstructor
+public class CaseSolutionService {
+    private final ModelMapper modelMapper;
+    private final CaseSolutionRepository caseSolutionRepository;
+    //private final CaseService caseService;
+
+    //add right solution for cases and case must not have solution
+
+//    public void addCaseSolution(Integer caseId, CaseSolutionDTOIN dto) {
+//       Case c = caseService.checkCase(caseId);
+//        if (c.getCaseSolution() != null) {
+//            throw new ApiException("This case already has a solution");
+//        }
+//    CaseSolution solution = modelMapper.map(dto, CaseSolution.class);
+//        solution.setCaseEntity(c);
+//        caseSolutionRepository.save(solution);
+//
+//}
+
+    public void updateCaseSolution(Integer caseId, CaseSolutionIn dto) {
+        CaseSolution old = checkCaseSolution(caseId);
+        old.setJustification(dto.getJustification());
+        caseSolutionRepository.save(old);
+
+    }
+    public void deleteCaseSolution(Integer caseId) {
+        caseSolutionRepository.delete(checkCaseSolution(caseId));
+
+    }
+    // endpoint  get solution for case
+    public CaseSolutionOut getCaseSolution(Integer caseId) {
+
+        return modelMapper.map(checkCaseSolution(caseId), CaseSolutionOut.class);
+
+    }
+    public CaseSolution checkCaseSolution(Integer caseId) {
+
+        CaseSolution solution = caseSolutionRepository.findCaseSolutionById(caseId);
+
+        if (solution == null) throw new ApiException("Case solution not found");
+
+        return solution;
+
+    }
+}

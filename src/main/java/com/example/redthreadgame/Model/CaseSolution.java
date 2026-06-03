@@ -12,21 +12,18 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "evidences")
-public class Evidence {
+@Table(name = "case_solutions")
+public class CaseSolution {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(nullable = false)
-    private String title;
-
     @Column(columnDefinition = "varchar(500) not null")
-    private String description;
+    private String justification;
 
-    @ManyToOne
+    @OneToOne
+    @MapsId
     @JoinColumn(name = "case_id")
-    @JsonIgnore
-    private Case evidenceCase;
+    private Case solutionCase;
+
 }

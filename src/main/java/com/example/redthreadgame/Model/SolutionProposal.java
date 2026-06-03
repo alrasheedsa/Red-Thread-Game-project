@@ -1,5 +1,6 @@
 package com.example.redthreadgame.Model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -27,18 +28,16 @@ public class SolutionProposal {
     @Column(columnDefinition = "int not null")
     private Integer acceptCount;
 
-//    @ManyToOne
-//    @JoinColumn(name = "game_session_id", referencedColumnName = "id")
-//    @JsonIgnore
-//    private GameSessionModel gameSession;
-//
-//    @ManyToOne
-//    @JoinColumn(name = "player_id", referencedColumnName = "id")
-//    @JsonIgnore
-//    private PlayerModel player;
-//
-//    @ManyToOne
-//    @JoinColumn(name = "suspect_id", referencedColumnName = "id")
-//    @JsonIgnore
-//    private SuspectModel suspect;
+    @ManyToOne
+    @JoinColumn(name = "game_session_id", referencedColumnName = "id")
+    @JsonIgnore
+    private GameSession gameSession;
+
+    @ManyToOne
+    @JoinColumn(name = "player_id", referencedColumnName = "id")
+    private Player player;
+
+    @ManyToOne
+    @JoinColumn(name = "suspect_id", referencedColumnName = "id")
+    private Suspect suspect;
 }

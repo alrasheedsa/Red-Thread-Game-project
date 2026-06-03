@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.Set;
+
 @Setter
 @Getter
 @AllArgsConstructor
@@ -21,12 +23,12 @@ public class Invitation {
     @Column(columnDefinition = "varchar(20) check (status = 'PENDING' or status = 'ACCEPTED' or status = 'REJECTED')", nullable = false)
     private String status;
 
-//    @ManyToOne
-//    @JsonIgnore
-//    @JoinColumn(name = "gameSession_id")
-//    private GameSession gameSession;
+    @ManyToOne
+    @JoinColumn(name = "gameSession_id")
+    private GameSession gameSession;
 
-//    @ManyToMany(mappedBy = "invitations")
-//    @JsonIgnore
-//    private Set<Player> players;
+    @ManyToOne
+    @JoinColumn(name = "player_id")
+    @JsonIgnore // test and decide
+    private Player player;
 }
