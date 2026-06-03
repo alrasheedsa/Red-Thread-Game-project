@@ -22,19 +22,19 @@ public class WitnessController {
         return ResponseEntity.ok(witnessService.getAllWitnesses());
     }
 
-    @PostMapping("add/{caseId}")
+    @PostMapping("/add/{caseId}")
     public ResponseEntity<?> addWitness(@PathVariable Integer caseId, @RequestBody @Valid WitnessIn dto) {
         witnessService.addWitness(caseId, dto);
         return ResponseEntity.status(201).body(new ApiResponse("Witness added successfully"));
     }
 
-    @PutMapping("update/{id}")
+    @PutMapping("/update/{id}")
     public ResponseEntity<?> updateWitness(@PathVariable Integer id, @RequestBody @Valid WitnessIn dto) {
         witnessService.updateWitness(id, dto);
         return ResponseEntity.ok(new ApiResponse("Witness updated successfully"));
     }
 
-    @DeleteMapping("delete/{id}")
+    @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> deleteWitness(@PathVariable Integer id) {
         witnessService.deleteWitness(id);
         return ResponseEntity.ok(new ApiResponse("Witness deleted successfully"));
