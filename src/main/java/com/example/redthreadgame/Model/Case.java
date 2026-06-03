@@ -24,7 +24,7 @@ public class Case {
     @Column(nullable = false)
     private String title;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(nullable = false, columnDefinition = "varchar(500)")//text
     private String scenario;
 
     @Column(nullable = false)
