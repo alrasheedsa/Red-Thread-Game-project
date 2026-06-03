@@ -15,16 +15,16 @@ public class SolutionProposalController {
 
     private final SolutionProposalService solutionProposalService;
 
-//    @GetMapping("/get-by-session/{gameSessionId}")
-//    public ResponseEntity<?> getProposalsByGameSession(@PathVariable Integer gameSessionId) {
-//        return ResponseEntity.status(200).body(solutionProposalService.getProposalsByGameSession(gameSessionId));
-//    }
-//
-//    @PostMapping("/submit/{gameSessionId}/{playerId}/{suspectId}")
-//    public ResponseEntity<?> submitProposal(@PathVariable Integer gameSessionId, @PathVariable Integer playerId, @PathVariable Integer suspectId, @RequestBody @Valid SolutionProposalIn dto) {
-//        solutionProposalService.submitProposal(gameSessionId, playerId, suspectId, dto);
-//        return ResponseEntity.status(200).body(new ApiResponse("Solution proposal submitted successfully"));
-//    }
+    @GetMapping("/get-by-session/{gameSessionId}")
+    public ResponseEntity<?> getProposalsByGameSession(@PathVariable Integer gameSessionId) {
+        return ResponseEntity.status(200).body(solutionProposalService.getProposalsByGameSession(gameSessionId));
+    }
+
+    @PostMapping("/submit/{gameSessionId}/{playerId}/{suspectId}")
+    public ResponseEntity<?> submitProposal(@PathVariable Integer gameSessionId, @PathVariable Integer playerId, @PathVariable Integer suspectId, @RequestBody @Valid SolutionProposalIn dto) {
+        solutionProposalService.submitProposal(gameSessionId, playerId, suspectId, dto);
+        return ResponseEntity.status(200).body(new ApiResponse("Solution proposal submitted successfully"));
+    }
 
     @PutMapping("/accept/{proposalId}")
     public ResponseEntity<?> acceptProposal(@PathVariable Integer proposalId) {

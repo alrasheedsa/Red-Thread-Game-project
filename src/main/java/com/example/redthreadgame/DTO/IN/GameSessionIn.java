@@ -15,6 +15,7 @@ public class GameSessionIn {
     @NotNull(message = "isPrivate is required")
     private Boolean isPrivate;
 
+    @NotNull(message = "Players count is required")
     @Min(value = 1, message = "Players Count must be at least 1")
     @Max(value = 6, message = "Players Count must not exceed 6")
     private Integer playersCount;

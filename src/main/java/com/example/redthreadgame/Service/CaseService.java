@@ -3,6 +3,7 @@ package com.example.redthreadgame.Service;
 import com.example.redthreadgame.Api.ApiException;
 import com.example.redthreadgame.DTO.IN.CaseIn;
 import com.example.redthreadgame.DTO.OUT.CaseOut;
+import com.example.redthreadgame.Model.Admin;
 import com.example.redthreadgame.Model.Case;
 import com.example.redthreadgame.Repository.CaseRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +22,7 @@ public class CaseService {
 
     private final CaseRepository caseRepository;
 
-    // private final AdminService adminService;
+     private final AdminService adminService;
 
     public List<CaseOut> getAllCases() {
         List<CaseOut> cases = new ArrayList<>();
@@ -32,26 +33,22 @@ public class CaseService {
 
     }
     public void addCase(Integer adminId, CaseIn dto) {
-        // Admin admin = adminService.checkAdmin(adminId);
+        adminService.checkAdmin(adminId);
         Case c = modelMapper.map(dto, Case.class);
-        // c.setAdmin(admin);
         c.setStatus("DRAFT");
-
         caseRepository.save(c);
-
     }
+
+
+
     public void updateCase(Integer id, CaseIn dto) {
-
         Case old = checkCase(id);
-
         old.setTitle(dto.getTitle());
-
         old.setScenario(dto.getScenario());
-
         old.setDifficulty(dto.getDifficulty());
 
-        caseRepository.save(old);
 
+        caseRepository.save(old);
     }
     public void deleteCase(Integer id) {
 

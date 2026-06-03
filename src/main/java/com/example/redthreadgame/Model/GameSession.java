@@ -16,6 +16,7 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
+@Table(name = "game_session")
 @Check(constraints = "players_count > 0 AND players_count < 7")
 public class GameSession {
 
@@ -46,7 +47,11 @@ public class GameSession {
 
     @ManyToOne
     @JoinColumn(name = "case_id")
-    private Case sessionCase;;
+    private Case sessionCase;
+
+    @ManyToOne
+    @JoinColumn(name = "owner_id")
+    private Player owner;
 
     @OneToMany(mappedBy = "gameSession", cascade = CascadeType.ALL)
     private Set<Hint> hints;

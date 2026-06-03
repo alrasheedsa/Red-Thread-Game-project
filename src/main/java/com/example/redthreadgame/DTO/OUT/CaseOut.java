@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
+
 @Setter
 @Getter
 @NoArgsConstructor
@@ -18,10 +20,8 @@ public class CaseOut {
 
 
     //content cases
-//    private List<WitnessOut> witnesses;
-//    private List<SuspectOut> suspects;
-//    private List<EvidenceOut> evidences;
+    private List<WitnessOut> witnesses;
+    private List<SuspectOut> suspects;
+    private List<EvidenceOut> evidences;
 
-//need discussion _+_+
-    // private CaseSolutionOut caseSolution;
 }

@@ -21,9 +21,9 @@ public class GameSessionController {
         return ResponseEntity.status(200).body(gameSessionService.getAllGameSessions());
     }
 
-    @PostMapping("/add")
-    public ResponseEntity<?> addGameSession(@RequestBody @Valid GameSessionIn gameSession){
-        gameSessionService.addGameSession(gameSession);
+    @PostMapping("/add/{caseId}")
+    public ResponseEntity<?> addGameSession(@PathVariable Integer caseId, @RequestBody @Valid GameSessionIn gameSession){
+        gameSessionService.addGameSession(caseId ,gameSession);
         return ResponseEntity.status(200).body(new ApiResponse("Game Session added successfully"));
     }
 
@@ -37,5 +37,11 @@ public class GameSessionController {
     public ResponseEntity<?> deleteGameSession(@PathVariable Integer id){
         gameSessionService.deleteGameSession(id);
         return ResponseEntity.status(200).body(new ApiResponse("Game Session deleted successfully"));
+    }
+
+    @PutMapping("/update-status/{id}")
+    public ResponseEntity<?> updateStatus(@PathVariable Integer id){
+        gameSessionService.updateStatus(id);
+        return ResponseEntity.status(200).body(new ApiResponse("Game Session updated successfully"));
     }
 }

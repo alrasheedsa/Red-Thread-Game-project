@@ -11,5 +11,5 @@ public interface SuspectRepository extends JpaRepository<Suspect, Integer> {
 
     Suspect findSuspectById(Integer id);
     //
-    //List<Suspect> findSuspectsByCaseEntityId(Integer caseId);
+    List<Suspect> findSuspectsBySuspectCaseId(Integer caseId);
     }

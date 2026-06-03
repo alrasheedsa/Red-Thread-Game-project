@@ -11,5 +11,5 @@ public interface EvidenceRepository extends JpaRepository<Evidence, Integer> {
 
     Evidence findEvidenceById(Integer id);
     //all evidence by case
-    //List<Evidence> findEvidencesByCaseEntityId(Integer caseId);
+    List<Evidence> findEvidencesByEvidenceCaseId(Integer caseId);
 }

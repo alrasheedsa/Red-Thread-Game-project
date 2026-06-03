@@ -13,6 +13,7 @@ public class PlayerOut {
     private String name;
     private String username;
     private String email;
+    private String phoneNumber;
     private Integer age;
     private Integer score;
 

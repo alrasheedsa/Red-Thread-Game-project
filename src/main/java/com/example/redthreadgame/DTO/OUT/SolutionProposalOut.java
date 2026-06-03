@@ -14,8 +14,6 @@ public class SolutionProposalOut {
     private Integer rejectCount;
     private Integer acceptCount;
 
-    // TODO: add after relations are ready
-    // private Integer gameSessionId;
-    // private String playerName;
-    // private String suspectName;
+     private PlayerOut player;
+     private SuspectOut suspect;
 }

@@ -20,11 +20,6 @@ public class SuspectController {
         return ResponseEntity.ok(suspectService.getAllSuspects());
     }
 
-    // @GetMapping("/case/{caseId}")
-    // public ResponseEntity<List<SuspectOut>> getSuspectsByCase(@PathVariable Integer caseId) {
-    //     return ResponseEntity.ok(suspectService.getSuspectsByCaseId(caseId));
-    // }
-
     @PostMapping("add/{caseId}")
     public ResponseEntity<?> addSuspect(@PathVariable Integer caseId, @RequestBody @Valid SuspectIn dto) {
         suspectService.addSuspect(caseId, dto);
@@ -41,5 +36,10 @@ public class SuspectController {
     public ResponseEntity<ApiResponse> deleteSuspect(@PathVariable Integer id) {
         suspectService.deleteSuspect(id);
         return ResponseEntity.ok(new ApiResponse("Suspect deleted successfully"));
+    }
+
+    @GetMapping("/case/{caseId}")
+    public ResponseEntity<?> getSuspectsDetails(@PathVariable Integer caseId) {
+        return ResponseEntity.ok(suspectService.getSuspectsDetails(caseId));
     }
 }

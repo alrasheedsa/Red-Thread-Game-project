@@ -26,13 +26,13 @@ public class AdminController {
         return ResponseEntity.status(201).body(new ApiResponse("Admin added successfully"));
     }
 
-    @PutMapping("update/{id}")
+    @PutMapping("/update/{id}")
     public ResponseEntity<?> updateAdmin(@PathVariable Integer id, @RequestBody @Valid AdminIn dto) {
         adminService.updateAdmin(id, dto);
         return ResponseEntity.ok(new ApiResponse("Admin updated successfully"));
     }
 
-    @DeleteMapping("deleted/{id}")
+    @DeleteMapping("/deleted/{id}")
     public ResponseEntity<?> deleteAdmin(@PathVariable Integer id) {
         adminService.deleteAdmin(id);
         return ResponseEntity.ok(new ApiResponse("Admin deleted successfully"));
