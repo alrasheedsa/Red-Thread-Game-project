@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.Set;
+
 @Setter
 @Getter
 @AllArgsConstructor
@@ -36,13 +38,15 @@ public class Player {
     @Column(columnDefinition = "int default 0", insertable = false)
     private Integer score;
 
-//    @ManyToMany(mappedBy = "players")
-//    private Set<Invitation> invitations;
+    @OneToMany(mappedBy = "player", cascade = CascadeType.ALL)
+    private Set<Invitation> invitations;
 
-//    @OneToMany(mappedBy = "player", cascade = CascadeType.ALL)
-//    private Set<Note> notes;
+    @OneToMany(mappedBy = "player", cascade = CascadeType.ALL)
+    @JsonIgnore
+    private Set<Note> notes;
 
-//    @OneToMany(mappedBy = "player", cascade = CascadeType.ALL)
-//    private Set<SolutionProposal> solutionProposals;
+    @OneToMany(mappedBy = "player", cascade = CascadeType.ALL)
+    @JsonIgnore
+    private Set<SolutionProposal> solutionProposals;
 
 }

@@ -1,5 +1,6 @@
 package com.example.redthreadgame.Model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -8,6 +9,7 @@ import lombok.Setter;
 import org.hibernate.annotations.Check;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Setter
 @Getter
@@ -42,12 +44,20 @@ public class GameSession {
     @Column(columnDefinition = "datetime")
     private LocalDateTime endedAt;
 
-//    @OneToMany(mappedBy = "game_session", cascade = CascadeType.ALL)
-//    private Set<Hint> hints;
-//
-//    @OneToMany(mappedBy = "game_session", cascade = CascadeType.ALL)
-//    private Set<Note> notes;
-//
-//    @OneToMany(mappedBy = "game_session", cascade = CascadeType.ALL)
-//    private Set<SolutionProposal> solutionProposals;
+    @ManyToOne
+    @JoinColumn(name = "case_id")
+    private Case sessionCase;;
+
+    @OneToMany(mappedBy = "gameSession", cascade = CascadeType.ALL)
+    private Set<Hint> hints;
+
+    @OneToMany(mappedBy = "gameSession", cascade = CascadeType.ALL)
+    private Set<Note> notes;
+
+    @OneToMany(mappedBy = "gameSession", cascade = CascadeType.ALL)
+    @JsonIgnore
+    private Set<Invitation> invitations;
+
+    @OneToMany(mappedBy = "gameSession", cascade = CascadeType.ALL)
+    private Set<SolutionProposal> solutionProposals;
 }
