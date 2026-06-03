@@ -17,6 +17,11 @@ public class CaseSolutionService {
     private final CaseSolutionRepository caseSolutionRepository;
     private final CaseService caseService;
 
+    // endpoint  get solution for case for admin
+    public CaseSolutionOut getCaseSolution(Integer caseId) {
+        return modelMapper.map(checkCaseSolution(caseId), CaseSolutionOut.class);
+    }
+
     //add right solution for cases and case must not have solution
     public void addCaseSolution(Integer caseId, CaseSolutionIn dto) {
        Case c = caseService.checkCase(caseId);
@@ -40,18 +45,11 @@ public class CaseSolutionService {
         caseSolutionRepository.delete(checkCaseSolution(caseId));
 
     }
-    // endpoint  get solution for case for admin
-    public CaseSolutionOut getCaseSolution(Integer caseId) {
-        return modelMapper.map(checkCaseSolution(caseId), CaseSolutionOut.class);
-    }
 
     public CaseSolution checkCaseSolution(Integer caseId) {
-
         CaseSolution solution = caseSolutionRepository.findCaseSolutionById(caseId);
-
-        if (solution == null) throw new ApiException("Case solution not found");
-
+        if (solution == null)
+            throw new ApiException("Case solution not found");
         return solution;
-
     }
 }
