@@ -3,7 +3,9 @@ package com.example.redthreadgame.Service;
 import com.example.redthreadgame.Api.ApiException;
 import com.example.redthreadgame.DTO.IN.GameSessionIn;
 import com.example.redthreadgame.DTO.OUT.GameSessionOut;
+import com.example.redthreadgame.Model.Case;
 import com.example.redthreadgame.Model.GameSession;
+import com.example.redthreadgame.Repository.CaseRepository;
 import com.example.redthreadgame.Repository.GameSessionRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -18,6 +20,7 @@ public class GameSessionService {
 
     private final ModelMapper modelMapper;
     private final GameSessionRepository gameSessionRepository;
+    private final CaseRepository caseRepository;
 
 
     //BASIC CRUD
@@ -29,10 +32,13 @@ public class GameSessionService {
         return gameSessions;
     }
 
-    public void addGameSession(GameSessionIn gameSessionIn){
+    public void addGameSession(Integer caseId,GameSessionIn gameSessionIn){
+        Case sessionCase = checkCase(caseId);
+
         GameSession gameSession = modelMapper.map(gameSessionIn, GameSession.class);
+        gameSession.setSessionCase(sessionCase);
         gameSession.setStatus("PENDING");
-        gameSession.setScore(100);
+
         gameSessionRepository.save(gameSession);
     }
 
@@ -51,6 +57,16 @@ public class GameSessionService {
     }
 
 
+    //EXTRA ENDPOINTS
+    public void updateStatus(Integer id){
+        GameSession gameSession = checkGameSession(id);
+        if(gameSession.getStatus().equalsIgnoreCase("PENDING"))
+            gameSession.setStatus("IN_PROGRESS");
+        else if(gameSession.getStatus().equalsIgnoreCase("IN_PROGRESS"))
+            gameSession.setStatus("COMPLETED");
+        else throw new ApiException("game session is completed you cannot change the status");
+    }
+
 
     //HELPER METHODS
     private GameSession checkGameSession(Integer id){
@@ -58,5 +74,12 @@ public class GameSessionService {
         if(gameSession == null) throw new ApiException("Game Session not found"); //check game session
 
         return gameSession;
+    }
+
+    private Case checkCase(Integer id){
+        Case sessionCase = caseRepository.findCaseById(id);
+        if(sessionCase == null) throw new ApiException("Case not found"); //check case
+
+        return sessionCase;
     }
 }

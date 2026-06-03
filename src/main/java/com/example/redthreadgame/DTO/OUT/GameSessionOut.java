@@ -1,13 +1,11 @@
 package com.example.redthreadgame.DTO.OUT;
 
-
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.OneToMany;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -23,7 +21,8 @@ public class GameSessionOut {
     private LocalDateTime startedAt;
     private LocalDateTime endedAt;
 
-//    private Set<HintOut> hints;
-//    private Set<NoteOut> notes;
-//    private Set<SolutionProposalOut> solutionProposals;
+    private CaseOut sessionCase;
+    private Set<HintOut> hints;
+    private Set<NoteOut> notes;
+    private Set<SolutionProposalOut> solutionProposals;
 }
