@@ -16,7 +16,7 @@ public class CaseSolutionController {
 
     @GetMapping("/get/{caseId}")
     public ResponseEntity<?> getCaseSolution(@PathVariable Integer caseId) {
-        return ResponseEntity.ok(caseSolutionService.getCaseSolution(caseId));
+        return ResponseEntity.status(200).body(caseSolutionService.getCaseSolution(caseId));
     }
 
     @PostMapping("/add/{caseId}")
@@ -27,12 +27,12 @@ public class CaseSolutionController {
 @PutMapping("/update/{caseId}")
 public ResponseEntity<?> updateCaseSolution(@PathVariable Integer caseId, @RequestBody @Valid CaseSolutionIn dto) {
     caseSolutionService.updateCaseSolution(caseId, dto);
-    return ResponseEntity.ok(new ApiResponse("Case solution updated successfully"));
+    return ResponseEntity.status(200).body(new ApiResponse("Case solution updated successfully"));
 }
     @DeleteMapping("/delete/{caseId}")
     public ResponseEntity<?> deleteCaseSolution(@PathVariable Integer caseId) {
         caseSolutionService.deleteCaseSolution(caseId);
-        return ResponseEntity.ok(new ApiResponse("Case solution deleted successfully"));
+        return ResponseEntity.status(200).body(new ApiResponse("Case solution deleted successfully"));
 
     }
 

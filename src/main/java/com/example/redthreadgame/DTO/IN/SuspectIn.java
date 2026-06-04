@@ -18,5 +18,6 @@ public class SuspectIn {
     @NotNull(message = "age cannot be null")
     @Min(value = 1, message = "age must be positive")
     private Integer age;
+    private String reason;
 
 }

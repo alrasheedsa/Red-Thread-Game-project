@@ -2,6 +2,7 @@ package com.example.redthreadgame.Controller;
 
 import com.example.redthreadgame.Api.ApiResponse;
 import com.example.redthreadgame.DTO.IN.AdminIn;
+import com.example.redthreadgame.DTO.IN.AdminVerifyIn;
 import com.example.redthreadgame.Service.AdminService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,13 +18,13 @@ public class AdminController {
 
     @GetMapping("/get")
     public ResponseEntity<?> getAllAdmins() {
-        return ResponseEntity.ok(adminService.getAllAdmins());
+        return ResponseEntity.status(200).body(adminService.getAllAdmins());
     }
 
     @PostMapping("/add")
     public ResponseEntity<?> addAdmin(@RequestBody @Valid AdminIn dto) {
         adminService.addAdmin(dto);
-        return ResponseEntity.status(201).body(new ApiResponse("Admin added successfully"));
+        return ResponseEntity.status(200).body(new ApiResponse("Admin updated successfully"));
     }
 
     @PutMapping("/update/{id}")
@@ -33,8 +34,8 @@ public class AdminController {
     }
 
     @DeleteMapping("/deleted/{id}")
-    public ResponseEntity<?> deleteAdmin(@PathVariable Integer id) {
-        adminService.deleteAdmin(id);
-        return ResponseEntity.ok(new ApiResponse("Admin deleted successfully"));
+    public ResponseEntity<?> deleteAdmin(@PathVariable Integer id, @RequestBody @Valid AdminVerifyIn dto) {
+        adminService.deleteAdmin(id, dto.getPassword());
+        return ResponseEntity.status(200).body(new ApiResponse("Admin deleted successfully"));
     }
 }

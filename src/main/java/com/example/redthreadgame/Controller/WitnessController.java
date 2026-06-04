@@ -17,36 +17,35 @@ public class WitnessController {
 
     private final WitnessService witnessService;
 
-
     @GetMapping("/get")
     public ResponseEntity<?> getAllWitnesses() {
-        return ResponseEntity.ok(witnessService.getAllWitnesses());
+        return ResponseEntity.status(200).body(witnessService.getAllWitnesses());
     }
 
     @PostMapping("/add/{caseId}")
     public ResponseEntity<?> addWitness(@PathVariable Integer caseId, @RequestBody @Valid WitnessIn dto) {
         witnessService.addWitness(caseId, dto);
-        return ResponseEntity.status(201).body(new ApiResponse("Witness added successfully"));
+        return ResponseEntity.status(200).body(witnessService.getAllWitnesses());
     }
 
     @PutMapping("/update/{id}")
     public ResponseEntity<?> updateWitness(@PathVariable Integer id, @RequestBody @Valid WitnessIn dto) {
         witnessService.updateWitness(id, dto);
-        return ResponseEntity.ok(new ApiResponse("Witness updated successfully"));
+        return ResponseEntity.status(200).body(new ApiResponse("Witness updated successfully"));
     }
 
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> deleteWitness(@PathVariable Integer id) {
         witnessService.deleteWitness(id);
-        return ResponseEntity.ok(new ApiResponse("Witness deleted successfully"));
+        return ResponseEntity.status(200).body(new ApiResponse("Witness deleted successfully"));
     }
      @GetMapping("/case/{caseId}")
      public ResponseEntity<?> getWitnessesDetails(@PathVariable Integer caseId) {
-         return ResponseEntity.ok(witnessService.getWitnessesDetails(caseId));
+         return ResponseEntity.status(200).body(witnessService.getWitnessesDetails(caseId));
      }
 
     @PostMapping("/ask/{witnessId}")
     public ResponseEntity<?> askWitness(@PathVariable Integer witnessId, @RequestBody @Valid QuestionIn dto) {
-        return ResponseEntity.ok(witnessService.askWitness(witnessId, dto));
+        return ResponseEntity.status(200).body(witnessService.askWitness(witnessId, dto));
     }
 }

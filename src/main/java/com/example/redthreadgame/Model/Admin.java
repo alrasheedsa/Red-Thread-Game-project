@@ -30,7 +30,4 @@ public class Admin {
     @Column(nullable = false)
     private String password;
 
-    //  OneToMany
-    //@OneToMany(mappedBy = "admin", cascade = CascadeType.ALL)
-    // private List<Case> cases;
 }

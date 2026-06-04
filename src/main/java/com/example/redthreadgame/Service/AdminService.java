@@ -43,8 +43,9 @@ public class AdminService {
 
         adminRepository.save(old);
     }
-    public void deleteAdmin(Integer id) {
-        adminRepository.delete(checkAdmin(id));
+    public void deleteAdmin(Integer adminId, String password) {
+        verifyAdmin(adminId, password);
+        adminRepository.delete(checkAdmin(adminId));
     }
     //---------------------------------------------------END CRED-----------------------------------------------------------------------
 //helper method
