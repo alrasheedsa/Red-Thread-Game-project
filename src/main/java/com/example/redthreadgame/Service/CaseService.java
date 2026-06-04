@@ -5,6 +5,7 @@ import com.example.redthreadgame.DTO.IN.CaseIn;
 import com.example.redthreadgame.DTO.OUT.CaseOut;
 import com.example.redthreadgame.Model.Admin;
 import com.example.redthreadgame.Model.Case;
+import com.example.redthreadgame.Repository.AdminRepository;
 import com.example.redthreadgame.Repository.CaseRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -19,9 +20,7 @@ import java.util.List;
 public class CaseService {
 
     private final ModelMapper modelMapper;
-
     private final CaseRepository caseRepository;
-
      private final AdminService adminService;
 
     public List<CaseOut> getAllCases() {
@@ -76,10 +75,6 @@ public List<CaseOut> getPublishedCases() {
     return cases;
 
 }
- // for ai to genarte
-
-
-
 //helper method
     public Case checkCase(Integer id) {
 

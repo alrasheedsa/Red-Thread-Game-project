@@ -1,5 +1,8 @@
 package com.example.redthreadgame.Service;
 
+import com.example.redthreadgame.Repository.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -12,7 +15,16 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class OpenAiService {
+    private final CaseRepository caseRepository;
+    private final WitnessRepository witnessRepository;
+    private final SuspectRepository suspectRepository;
+    private final EvidenceRepository evidenceRepository;
+    private final CaseSolutionRepository caseSolutionRepository;
+    private final AdminService adminService;
+    private final CaseService caseService;
+
 
     @Value("${openai.api.key}")
     private String apiKey;
@@ -20,15 +32,17 @@ public class OpenAiService {
     @Value("${openai.api.url}")
     private String apiUrl;
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     //ترسل HTTP Requests
     private final RestTemplate restTemplate = new RestTemplate();
 
-    public String whatsAppText(String prompt) {
-        List<Map<String, String>> messages = new ArrayList<>();
-        messages.add(Map.of("role", "system", "content", "Write a short Arabic WhatsApp notification. Output only the message. No questions. No question marks."));
-        messages.add(Map.of("role", "user", "content", prompt));
-        return chat(messages);
-    }
+//    public String whatsAppText(String prompt) {
+//        List<Map<String, String>> messages = new ArrayList<>();
+//        messages.add(Map.of("role", "system", "content", "Write a short Arabic WhatsApp notification. Output only the message. No questions. No question marks."));
+//        messages.add(Map.of("role", "user", "content", prompt));
+//        return chat(messages);
+//    }
 
     public String generateAnswer(String prompt) {
         List<Map<String, String>> messages = new ArrayList<>();
