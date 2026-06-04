@@ -50,15 +50,15 @@ public class CaseController {
     }
 
     @PostMapping("/generate/{adminId}")
-    public ResponseEntity<ApiResponse> generateCase(@PathVariable Integer adminId) {
+    public ResponseEntity<?> generateCase(@PathVariable Integer adminId) {
         openAiService.generateCase(adminId);
-        return ResponseEntity.status(201).body(new ApiResponse("Case generated successfully as DRAFT"));
+        return ResponseEntity.status(200).body(new ApiResponse("Case generated successfully as DRAFT"));
     }
 
     @PostMapping("/generate-and-publish/{adminId}")
-    public ResponseEntity<ApiResponse> generateAndPublishCase(@PathVariable Integer adminId) {
+    public ResponseEntity<?> generateAndPublishCase(@PathVariable Integer adminId) {
         openAiService.generateAndPublishCase(adminId);
-        return ResponseEntity.status(201).body(new ApiResponse("Case generated and published successfully"));
+        return ResponseEntity.status(200).body(new ApiResponse("Case generated and published successfully"));
     }
 
 }
