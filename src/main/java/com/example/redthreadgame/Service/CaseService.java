@@ -31,12 +31,6 @@ public class CaseService {
         return cases;
 
     }
-    public void addCase(Integer adminId, CaseIn dto) {
-        adminService.checkAdmin(adminId);
-        Case c = modelMapper.map(dto, Case.class);
-        c.setStatus("DRAFT");
-        caseRepository.save(c);
-    }
     public void updateCase(Integer id, CaseIn dto) {
         Case old = checkCase(id);
         old.setTitle(dto.getTitle());
@@ -46,18 +40,30 @@ public class CaseService {
 
         caseRepository.save(old);
     }
-    public void deleteCase(Integer id) {
-        caseRepository.delete(checkCase(id));
+    public void deleteCase(Integer adminId, String password, Integer caseId) {
+        adminService.verifyAdmin(adminId, password);
+        caseRepository.delete(checkCase(caseId));
     }
     //---------------------------------------------------END CRED-----------------------------------------------------------------------
 
     //endpoint admin publish case
-public void publishCase(Integer id){
-    Case c = checkCase(id);
+public void publishCase(Integer adminId, String password, Integer caseId){
+    adminService.verifyAdmin(adminId, password);
+    Case c = checkCase(caseId);
     if (c.getStatus().equals("PUBLISHED"))
         throw new ApiException("Case is already published");
     c.setStatus("PUBLISHED");
 
+    caseRepository.save(c);
+}
+
+//move to derft by admin
+public void moveCaseToDraft(Integer adminId, String password, Integer caseId) {
+    adminService.verifyAdmin(adminId,password );
+    Case c = checkCase(caseId);
+    if (c.getStatus().equals("DRAFT"))
+        throw new ApiException("Case is already in DRAFT");
+    c.setStatus("DRAFT");
     caseRepository.save(c);
 }
 //players show case
@@ -66,9 +72,7 @@ public List<CaseOut> getPublishedCases() {
     for (Case c : caseRepository.findCasesByStatus("PUBLISHED")) {
         cases.add(modelMapper.map(c, CaseOut.class));
     }
-
     return cases;
-
 }
 //helper method
     public Case checkCase(Integer id) {

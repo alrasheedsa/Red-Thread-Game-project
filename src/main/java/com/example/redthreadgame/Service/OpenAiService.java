@@ -38,26 +38,25 @@ public class OpenAiService {
 
     // ─── GENERATE CASE ────────────────────────────────────────────────────────
 
-    public void generateCase(Integer adminId) {
-        adminService.checkAdmin(adminId);
-
+    public void generateCase(Integer adminId, String password) {
+        adminService.verifyAdmin(adminId, password);
         String prompt = """
-               Generate a murder mystery case in JSON format with this exact structure:
+Generate a creative mystery case. The case type can be murder, theft, kidnapping, fraud, or any other interesting crime that fits a detective game.
+Choose the case type naturally. Choose suspect ages and witness reliability scores naturally based on their role in the case. Use this exact JSON structure:
         {
           "title": "case title",
           "scenario": "detailed case scenario 3-5 sentences",
           "difficulty": "EASY or MEDIUM or HARD",
-          "witnesses": [
-            {"name": "witness name", "statement": "witness statement", "reliabilityScore": 80},
-            {"name": "witness name", "statement": "witness statement", "reliabilityScore": 50},
-            {"name": "witness name", "statement": "witness statement", "reliabilityScore": 75}
-
-          ],
+        "witnesses": [
+       {"name": "witness name", "statement": "witness statement", "reliabilityScore": score between 1 and 100 based on witness credibility},
+       {"name": "witness name", "statement": "witness statement", "reliabilityScore": score between 1 and 100 based on witness credibility},
+       {"name": "witness name", "statement": "witness statement", "reliabilityScore": score between 1 and 100 based on witness credibility}
+       ],,
           "suspects": [
-            {"name": "suspect name", "age": 35},
-            {"name": "suspect name", "age": 28},
-            {"name": "suspect name", "age": 42},
-            {"name": "child suspect name", "age": 10}
+            {"name": "suspect name", "age": choose_naturally},
+            {"name": "suspect name", "age": choose_naturally},
+            {"name": "suspect name", "age": choose_naturally},
+            {"name": "child suspect", "age": choose_between_8_and_14}
           ],
           "evidences": [
             {"title": "evidence title", "description": "evidence description"},
@@ -138,14 +137,16 @@ public class OpenAiService {
         }
     }
 
-    public void generateAndPublishCase(Integer adminId) {
-        adminService.checkAdmin(adminId);
-        generateCase(adminId);
+    public void generateAndPublishCase(Integer adminId, String password) {
+        generateCase(adminId, password);
         Case lastCase = caseRepository.findFirstByOrderByIdDesc();
-        if (lastCase == null)
-            throw new ApiException("Case not found");
-        caseService.publishCase(lastCase.getId());
+        if (lastCase == null) throw new ApiException("Case not found");
+        lastCase.setStatus("PUBLISHED");
+
+        caseRepository.save(lastCase);
+
     }
+
 
 
     // ─── GENERATE ANSWER ──────────────────────────────────────────────────────
@@ -212,4 +213,7 @@ public class OpenAiService {
             throw new ApiException("Failed to evaluate solution: " + e.getMessage());
         }
     }
+
+    //calculate score
+
     }

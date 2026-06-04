@@ -61,6 +61,7 @@ public class WitnessService {
         return witnesses;
     }
 
+    //endpoint by mohammed
     public VoiceAnswerOut askWitness(Integer witnessId, QuestionIn dto) {
         Witness witness = checkWitness(witnessId);
 
@@ -77,6 +78,7 @@ public class WitnessService {
         return new VoiceAnswerOut(answer, audioFileName);
     }
 
+    //helper method
     private Witness checkWitness(Integer id) {
         Witness witness = witnessRepository.findWitnessById(id);
         if (witness == null)

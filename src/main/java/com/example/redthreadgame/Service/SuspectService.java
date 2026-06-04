@@ -49,6 +49,7 @@ public class SuspectService {
         suspectRepository.delete(checkSuspect(id));
     }
     //---------------------------------------------------END CRED-----------------------------------------------------------------------
+
     public List<SuspectOut> getSuspectsDetails(Integer caseId) {
         caseService.checkCase(caseId);
         List<SuspectOut> suspects = new ArrayList<>();
@@ -58,6 +59,7 @@ public class SuspectService {
         return suspects;
     }
 
+    //endpoint by mohammed
     public VoiceAnswerOut askSuspect(Integer suspectId, QuestionIn dto) {
         Suspect suspect = checkSuspect(suspectId);
 
