@@ -1,6 +1,7 @@
 package com.example.redthreadgame.Controller;
 
 import com.example.redthreadgame.Api.ApiResponse;
+import com.example.redthreadgame.DTO.IN.QuestionIn;
 import com.example.redthreadgame.DTO.IN.SuspectIn;
 import com.example.redthreadgame.Service.SuspectService;
 import jakarta.validation.Valid;
@@ -41,5 +42,10 @@ public class SuspectController {
     @GetMapping("/case/{caseId}")
     public ResponseEntity<?> getSuspectsDetails(@PathVariable Integer caseId) {
         return ResponseEntity.ok(suspectService.getSuspectsDetails(caseId));
+    }
+
+    @PostMapping("/ask/{suspectId}")
+    public ResponseEntity<?> askSuspect(@PathVariable Integer suspectId, @RequestBody @Valid QuestionIn dto) {
+        return ResponseEntity.ok(suspectService.askSuspect(suspectId, dto));
     }
 }

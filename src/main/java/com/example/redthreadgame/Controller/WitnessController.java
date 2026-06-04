@@ -2,6 +2,7 @@ package com.example.redthreadgame.Controller;
 
 
 import com.example.redthreadgame.Api.ApiResponse;
+import com.example.redthreadgame.DTO.IN.QuestionIn;
 import com.example.redthreadgame.DTO.IN.WitnessIn;
 import com.example.redthreadgame.Service.WitnessService;
 import jakarta.validation.Valid;
@@ -43,4 +44,9 @@ public class WitnessController {
      public ResponseEntity<?> getWitnessesDetails(@PathVariable Integer caseId) {
          return ResponseEntity.ok(witnessService.getWitnessesDetails(caseId));
      }
+
+    @PostMapping("/ask/{witnessId}")
+    public ResponseEntity<?> askWitness(@PathVariable Integer witnessId, @RequestBody @Valid QuestionIn dto) {
+        return ResponseEntity.ok(witnessService.askWitness(witnessId, dto));
+    }
 }

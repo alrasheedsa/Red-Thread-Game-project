@@ -1,7 +1,9 @@
 package com.example.redthreadgame.Service;
 
 import com.example.redthreadgame.Api.ApiException;
+import com.example.redthreadgame.DTO.IN.QuestionIn;
 import com.example.redthreadgame.DTO.IN.SuspectIn;
+import com.example.redthreadgame.DTO.OUT.VoiceAnswerOut;
 import com.example.redthreadgame.DTO.OUT.SuspectOut;
 import com.example.redthreadgame.Model.Case;
 import com.example.redthreadgame.Model.Suspect;
@@ -19,6 +21,8 @@ public class SuspectService {
     private final ModelMapper modelMapper;
     private final SuspectRepository suspectRepository;
     private final CaseService caseService;
+    private final OpenAiService openAiService;
+    private final ElevenLabsService elevenLabsService;
   public List<SuspectOut> getAllSuspects() {
       List<SuspectOut> suspects = new ArrayList<>();
       for (Suspect s : suspectRepository.findAll()) {
@@ -54,6 +58,22 @@ public class SuspectService {
             suspects.add(modelMapper.map(s, SuspectOut.class));
         }
         return suspects;
+    }
+
+    public VoiceAnswerOut askSuspect(Integer suspectId, QuestionIn dto) {
+        Suspect suspect = checkSuspect(suspectId);
+
+        String prompt = "Suspect name: " + suspect.getName()
+                + "\nSuspect age: " + suspect.getAge()
+                + "\nPlayer question: " + dto.getQuestionText();
+
+        String answer = openAiService.generateAnswer(prompt);
+        if (answer == null || answer.isBlank()) {
+            answer = "I do not have anything else to say right now.";
+        }
+
+        String audioFileName = elevenLabsService.generateVoice(answer);
+        return new VoiceAnswerOut(answer, audioFileName);
     }
 
     public Suspect checkSuspect(Integer id) {

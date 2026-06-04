@@ -1,7 +1,9 @@
 package com.example.redthreadgame.Service;
 
 import com.example.redthreadgame.Api.ApiException;
+import com.example.redthreadgame.DTO.IN.QuestionIn;
 import com.example.redthreadgame.DTO.IN.WitnessIn;
+import com.example.redthreadgame.DTO.OUT.VoiceAnswerOut;
 import com.example.redthreadgame.DTO.OUT.WitnessOut;
 import com.example.redthreadgame.Model.Case;
 import com.example.redthreadgame.Model.Witness;
@@ -19,6 +21,8 @@ public class WitnessService {
     private final ModelMapper modelMapper;
     private final WitnessRepository witnessRepository;
     private final CaseService caseService;
+    private final OpenAiService openAiService;
+    private final ElevenLabsService elevenLabsService;
 
     public List<WitnessOut> getAllWitnesses() {
         List<WitnessOut> witnesses = new ArrayList<>();
@@ -56,6 +60,22 @@ public class WitnessService {
 
         }
         return witnesses;
+    }
+
+    public VoiceAnswerOut askWitness(Integer witnessId, QuestionIn dto) {
+        Witness witness = checkWitness(witnessId);
+
+        String prompt = "Witness name: " + witness.getName()
+                + "\nWitness statement: " + witness.getStatement()
+                + "\nPlayer question: " + dto.getQuestionText();
+
+        String answer = openAiService.generateAnswer(prompt);
+        if (answer == null || answer.isBlank()) {
+            answer = witness.getStatement();
+        }
+
+        String audioFileName = elevenLabsService.generateVoice(answer);
+        return new VoiceAnswerOut(answer, audioFileName);
     }
 
     private Witness checkWitness(Integer id) {
