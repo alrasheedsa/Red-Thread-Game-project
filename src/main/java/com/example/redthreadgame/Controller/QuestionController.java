@@ -53,4 +53,13 @@ public class QuestionController {
         questionService.deleteQuestion(questionId);
         return ResponseEntity.status(200).body(new ApiResponse("Question deleted successfully"));
     }
+    @GetMapping("/witness/{witnessId}")
+    public ResponseEntity<?> getQuestionsByWitness(@PathVariable Integer witnessId) {
+        return ResponseEntity.status(200).body(questionService.getQuestionsByWitnessId(witnessId));
+    }
+    @GetMapping("/suspect/{suspectId}")
+    public ResponseEntity<?> getQuestionsBySuspect(@PathVariable Integer suspectId) {
+        return ResponseEntity.status(200).body(questionService.getQuestionsBySuspectId(suspectId));
+    }
+
 }

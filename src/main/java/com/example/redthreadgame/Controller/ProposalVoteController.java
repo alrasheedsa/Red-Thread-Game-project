@@ -47,4 +47,13 @@ public class ProposalVoteController {
         proposalVoteService.deleteProposalVote(voteId);
         return ResponseEntity.status(200).body(new ApiResponse("Proposal vote deleted successfully"));
     }
+    @GetMapping("/majority-accepted/{proposalId}")
+    public ResponseEntity<?> hasMajorityAccepted(@PathVariable Integer proposalId) {
+        return ResponseEntity.status(200).body(proposalVoteService.hasMajorityAccepted(proposalId));
+    }
+
+    @GetMapping("/majority-rejected/{proposalId}")
+    public ResponseEntity<?> hasMajorityRejected(@PathVariable Integer proposalId) {
+        return ResponseEntity.status(200).body(proposalVoteService.hasMajorityRejected(proposalId));
+    }
 }

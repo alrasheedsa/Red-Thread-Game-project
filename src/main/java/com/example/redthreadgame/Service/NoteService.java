@@ -29,7 +29,6 @@ public class NoteService {
         for (Note n : noteRepository.findAll()) {
             notes.add(modelMapper.map(n, NoteOut.class));
         }
-
         return notes;
     }
 
@@ -40,6 +39,17 @@ public class NoteService {
             notes.add(modelMapper.map(n, NoteOut.class));
         }
 
+        return notes;
+    }
+    public List<NoteOut> getNotesByPlayer(Integer playerId) {
+        Player player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new ApiException("Player not found"));
+
+        List<NoteOut> notes = new ArrayList<>();
+
+        for (Note n : noteRepository.findAllByPlayerId(playerId)) {
+            notes.add(modelMapper.map(n, NoteOut.class));
+        }
         return notes;
     }
 

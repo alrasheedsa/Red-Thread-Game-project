@@ -2,11 +2,14 @@ package com.example.redthreadgame.Controller;
 
 import com.example.redthreadgame.Api.ApiResponse;
 import com.example.redthreadgame.DTO.IN.NoteIn;
+import com.example.redthreadgame.DTO.OUT.NoteOut;
 import com.example.redthreadgame.Service.NoteService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RequestMapping("/api/v1/note")
 @RestController
@@ -41,5 +44,9 @@ public class NoteController {
     public ResponseEntity<?> deleteNote(@PathVariable Integer noteId) {
         noteService.deleteNote(noteId);
         return ResponseEntity.status(200).body(new ApiResponse("Note deleted successfully"));
+    }
+    @GetMapping("/player/{playerId}")
+    public ResponseEntity<?> getPlayerNotes(@PathVariable Integer playerId) {
+        return ResponseEntity.status(200).body(noteService.getNotesByPlayer(playerId));
     }
 }

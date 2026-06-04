@@ -25,16 +25,11 @@ public class AdminService {
         }
         return admins;
     }
-
     public void addAdmin(AdminIn dto) {
-        // check the email is not duplicated
-        if (adminRepository.findAdminByEmail(dto.getEmail()) != null) {
+        if (adminRepository.findAdminByEmail(dto.getEmail()) != null)
             throw new ApiException("Email already exists");
-        }
-        //also check for username
-        if (adminRepository.findAdminByUsername(dto.getUsername()) != null) {
+        if (adminRepository.findAdminByUsername(dto.getUsername()) != null)
             throw new ApiException("Username already exists");
-        }
         Admin admin = modelMapper.map(dto, Admin.class);
         adminRepository.save(admin);
     }
@@ -48,14 +43,23 @@ public class AdminService {
 
         adminRepository.save(old);
     }
-
     public void deleteAdmin(Integer id) {
         adminRepository.delete(checkAdmin(id));
     }
-
+    //---------------------------------------------------END CRED-----------------------------------------------------------------------
+//helper method
     public Admin checkAdmin(Integer id) {
         Admin admin = adminRepository.findAdminById(id);
-        if (admin == null) throw new ApiException("Admin not found");
+        if (admin == null)
+            throw new ApiException("Admin not found");
         return admin;
     }
+
+    public Admin verifyAdmin(Integer adminId, String password) {
+        Admin admin = checkAdmin(adminId);
+        if (admin.getPassword() == null || !admin.getPassword().equals(password))
+            throw new ApiException("Invalid password");
+        return admin;
+    }
+
 }

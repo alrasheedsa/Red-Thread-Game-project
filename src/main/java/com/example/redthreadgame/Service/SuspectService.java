@@ -23,6 +23,7 @@ public class SuspectService {
     private final CaseService caseService;
     private final OpenAiService openAiService;
     private final ElevenLabsService elevenLabsService;
+
   public List<SuspectOut> getAllSuspects() {
       List<SuspectOut> suspects = new ArrayList<>();
       for (Suspect s : suspectRepository.findAll()) {
@@ -30,7 +31,6 @@ public class SuspectService {
       }
       return suspects;
   }
-
     public void addSuspect(Integer caseId, SuspectIn dto) {
          Case c = caseService.checkCase(caseId);
         Suspect suspect = modelMapper.map(dto, Suspect.class);
@@ -45,12 +45,11 @@ public class SuspectService {
 
         suspectRepository.save(old);
     }
-
     public void deleteSuspect(Integer id) {
         suspectRepository.delete(checkSuspect(id));
     }
+    //---------------------------------------------------END CRED-----------------------------------------------------------------------
 
-    //endpoint get suspect  by case
     public List<SuspectOut> getSuspectsDetails(Integer caseId) {
         caseService.checkCase(caseId);
         List<SuspectOut> suspects = new ArrayList<>();
@@ -60,6 +59,7 @@ public class SuspectService {
         return suspects;
     }
 
+    //endpoint by mohammed
     public VoiceAnswerOut askSuspect(Integer suspectId, QuestionIn dto) {
         Suspect suspect = checkSuspect(suspectId);
 
@@ -76,6 +76,7 @@ public class SuspectService {
         return new VoiceAnswerOut(answer, audioFileName);
     }
 
+    //helper method
     public Suspect checkSuspect(Integer id) {
         Suspect suspect = suspectRepository.findSuspectById(id);
         if (suspect == null) throw new ApiException("Suspect not found");

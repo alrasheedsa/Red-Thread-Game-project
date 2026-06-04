@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -73,7 +74,7 @@ public class ProposalVoteService {
         proposalVote.setVote(voteType);
         proposalVote.setSolutionProposal(proposal);
         proposalVote.setPlayer(player);
-
+        proposalVote.setVotedAt(LocalDateTime.now());
         updateProposalVoteCount(proposal, voteType, 1);
         proposalVoteRepository.save(proposalVote);
         solutionProposalRepository.save(proposal);
@@ -101,6 +102,21 @@ public class ProposalVoteService {
         updateProposalVoteCount(proposal, proposalVote.getVote(), -1);
         proposalVoteRepository.delete(proposalVote);
         solutionProposalRepository.save(proposal);
+    }
+    public Boolean hasMajorityAccepted(Integer proposalId) {
+        SolutionProposal proposal = solutionProposalRepository.findById(proposalId)
+                .orElseThrow(() -> new ApiException("Solution proposal not found"));
+
+        Integer playersCount = proposal.getGameSession().getPlayersCount();
+        return proposal.getAcceptCount() > playersCount / 2;
+    }
+
+    public Boolean hasMajorityRejected(Integer proposalId) {
+        SolutionProposal proposal = solutionProposalRepository.findById(proposalId)
+                .orElseThrow(() -> new ApiException("Solution proposal not found"));
+
+        Integer playersCount = proposal.getGameSession().getPlayersCount();
+        return proposal.getRejectCount() >= playersCount / 2;
     }
 
     private ProposalVote checkProposalVote(Integer id) {

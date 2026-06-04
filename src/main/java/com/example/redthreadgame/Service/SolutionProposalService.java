@@ -81,4 +81,33 @@ public class SolutionProposalService {
         proposal.setStatus(status);
         solutionProposalRepository.save(proposal);
     }
+
+    public List<SolutionProposalOut> getProposalsByPlayer(Integer playerId) {
+        List<SolutionProposalOut> proposals = new ArrayList<>();
+
+        for (SolutionProposal s : solutionProposalRepository.findAllByPlayerId(playerId)) {
+            proposals.add(modelMapper.map(s, SolutionProposalOut.class));
+        }
+
+        return proposals;
+    }
+
+    public void markProposalCorrect(Integer proposalId) {
+        SolutionProposal proposal = solutionProposalRepository.findById(proposalId)
+                .orElseThrow(() -> new ApiException("Solution proposal not found"));
+
+        proposal.setStatus("CORRECT");
+        solutionProposalRepository.save(proposal);
+    }
+
+    public void markProposalWrong(Integer proposalId) {
+        SolutionProposal proposal = solutionProposalRepository.findById(proposalId)
+                .orElseThrow(() -> new ApiException("Solution proposal not found"));
+
+        proposal.setStatus("WRONG");
+        solutionProposalRepository.save(proposal);
+    }
+    public void evaluateProposal(Integer proposalId) {
+       //CaseSolution checkCorrectSuspect
+    }
 }

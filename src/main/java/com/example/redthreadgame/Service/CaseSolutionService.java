@@ -21,7 +21,6 @@ public class CaseSolutionService {
     public CaseSolutionOut getCaseSolution(Integer caseId) {
         return modelMapper.map(checkCaseSolution(caseId), CaseSolutionOut.class);
     }
-
     //add right solution for cases and case must not have solution
     public void addCaseSolution(Integer caseId, CaseSolutionIn dto) {
        Case c = caseService.checkCase(caseId);
@@ -33,7 +32,6 @@ public class CaseSolutionService {
         caseSolutionRepository.save(solution);
 
 }
-
     public void updateCaseSolution(Integer caseId, CaseSolutionIn dto) {
         CaseSolution old = checkCaseSolution(caseId);
 
@@ -45,6 +43,7 @@ public class CaseSolutionService {
         caseSolutionRepository.delete(checkCaseSolution(caseId));
 
     }
+    //---------------------------------------------------END CRED-----------------------------------------------------------------------
 
     public CaseSolution checkCaseSolution(Integer caseId) {
         CaseSolution solution = caseSolutionRepository.findCaseSolutionById(caseId);

@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -64,6 +65,7 @@ public class QuestionService {
         question.setGameSession(gameSession);
         question.setPlayer(player);
         question.setWitness(witness);
+        question.setCreatedAt(LocalDateTime.now());
 
         questionRepository.save(question);
     }
@@ -78,6 +80,7 @@ public class QuestionService {
         question.setGameSession(gameSession);
         question.setPlayer(player);
         question.setSuspect(suspect);
+        question.setCreatedAt(LocalDateTime.now());
 
         questionRepository.save(question);
     }
@@ -96,6 +99,24 @@ public class QuestionService {
         Question question = checkQuestion(questionId);
         questionRepository.delete(question);
     }
+
+    public List<QuestionOut> getQuestionsByWitnessId(Integer witnessId) {
+        List<QuestionOut> questions = new ArrayList<>();
+
+        for(Question q : questionRepository.findAllByWitnessId(witnessId)) {
+            questions.add(modelMapper.map(q, QuestionOut.class));
+        }
+        return  questions;
+    }
+
+    public List<QuestionOut> getQuestionsBySuspectId(Integer suspectId) {
+        List<QuestionOut> questions = new ArrayList<>();
+        for(Question q : questionRepository.findAllBySuspectId(suspectId)) {
+            questions.add(modelMapper.map(q, QuestionOut.class));
+        }
+        return questions;
+    }
+
 
     private Question checkQuestion(Integer id) {
         Question question = questionRepository.findQuestionById(id);

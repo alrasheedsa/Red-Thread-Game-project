@@ -31,7 +31,6 @@ public class WitnessService {
         }
         return witnesses;
     }
-
     public void addWitness(Integer caseId, WitnessIn dto){
         Case c = caseService.checkCase(caseId);
         Witness witness= modelMapper.map(dto, Witness.class);
@@ -39,7 +38,6 @@ public class WitnessService {
 
         witnessRepository.save(witness);
     }
-
     public void updateWitness(Integer id, WitnessIn dto) {
         Witness old = checkWitness(id);
         old.setName(dto.getName());
@@ -48,10 +46,11 @@ public class WitnessService {
 
         witnessRepository.save(old);
     }
-
    public void deleteWitness(Integer id){
         witnessRepository.delete(checkWitness(id));
    }
+    //---------------------------------------------------END CRED-----------------------------------------------------------------------
+
     public List<WitnessOut> getWitnessesDetails(Integer caseId) {
         caseService.checkCase(caseId);
         List<WitnessOut> witnesses = new ArrayList<>();
@@ -62,6 +61,7 @@ public class WitnessService {
         return witnesses;
     }
 
+    //endpoint by mohammed
     public VoiceAnswerOut askWitness(Integer witnessId, QuestionIn dto) {
         Witness witness = checkWitness(witnessId);
 
@@ -78,6 +78,7 @@ public class WitnessService {
         return new VoiceAnswerOut(answer, audioFileName);
     }
 
+    //helper method
     private Witness checkWitness(Integer id) {
         Witness witness = witnessRepository.findWitnessById(id);
         if (witness == null)

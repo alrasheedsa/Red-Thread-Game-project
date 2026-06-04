@@ -10,10 +10,10 @@ import java.util.List;
 
 public interface CaseRepository extends JpaRepository<Case, Integer> {
     Case findCaseById(Integer id);
-
     List<Case> findCasesByStatus(String status);
+    Case findFirstByOrderByIdDesc();
 
 
-   // List<Case> findCasesByAdminId(Integer adminId);
+    // List<Case> findCasesByAdminId(Integer adminId);
 
 }

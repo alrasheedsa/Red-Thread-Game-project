@@ -8,4 +8,6 @@ import java.util.List;
 public interface SolutionProposalRepository extends JpaRepository<SolutionProposal, Integer> {
 
     List<SolutionProposal> findAllByGameSessionId(Integer gameSessionId);
+    List<SolutionProposal> findAllByPlayerId(Integer playerId);
+    SolutionProposal findSolutionProposalById(Integer id);
 }

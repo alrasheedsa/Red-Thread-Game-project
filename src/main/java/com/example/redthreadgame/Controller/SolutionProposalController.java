@@ -43,4 +43,24 @@ public class SolutionProposalController {
         solutionProposalService.changeStatus(proposalId, status);
         return ResponseEntity.status(200).body(new ApiResponse("Solution proposal status changed successfully"));
     }
+    @GetMapping("/player/{playerId}")
+    public ResponseEntity<?> getProposalsByPlayer(@PathVariable Integer playerId) {
+        return ResponseEntity.status(200).body(solutionProposalService.getProposalsByPlayer(playerId));
+    }
+
+    @PutMapping("/correct/{proposalId}")
+    public ResponseEntity<?> markProposalCorrect(@PathVariable Integer proposalId) {
+        solutionProposalService.markProposalCorrect(proposalId);
+        return ResponseEntity.status(200).body(new ApiResponse("Solution proposal marked correct successfully"));
+    }
+
+    @PutMapping("/wrong/{proposalId}")
+    public ResponseEntity<?> markProposalWrong(@PathVariable Integer proposalId) {
+        solutionProposalService.markProposalWrong(proposalId);
+        return ResponseEntity.status(200).body(new ApiResponse("Solution proposal marked wrong successfully"));
+    }
+//    @PutMapping("/evaluate/{proposalId}")
+//    public ResponseEntity<?> evaluateProposal(@PathVariable Integer proposalId) {
+//        solutionProposalService.evaluateProposal(proposalId);
+//    }
 }
