@@ -1,71 +1,219 @@
 package com.example.redthreadgame.Service;
 
+import com.example.redthreadgame.Api.ApiException;
+import com.example.redthreadgame.Model.*;
+import com.example.redthreadgame.Repository.*;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class OpenAiService {
 
+    private final CaseRepository caseRepository;
+    private final WitnessRepository witnessRepository;
+    private final SuspectRepository suspectRepository;
+    private final EvidenceRepository evidenceRepository;
+    private final CaseSolutionRepository caseSolutionRepository;
+    private final AdminService adminService;
+    private final CaseService caseService;
+
     @Value("${openai.api.key}")
-    private String apiKey;
+    private String openAiApiKey;
 
-    @Value("${openai.api.url}")
-    private String apiUrl;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    //ترسل HTTP Requests
-    private final RestTemplate restTemplate = new RestTemplate();
 
-    public String whatsAppText(String prompt) {
-        List<Map<String, String>> messages = new ArrayList<>();
-        messages.add(Map.of("role", "system", "content", "Write a short Arabic WhatsApp notification. Output only the message. No questions. No question marks."));
-        messages.add(Map.of("role", "user", "content", prompt));
-        return chat(messages);
-    }
+    // ─── GENERATE CASE ────────────────────────────────────────────────────────
 
-    public String generateAnswer(String prompt) {
-        List<Map<String, String>> messages = new ArrayList<>();
-        messages.add(Map.of("role", "system", "content", "You are a mystery game character. Answer naturally, briefly, and stay consistent with the provided character information."));
-        messages.add(Map.of("role", "user", "content", prompt));
-        return chat(messages);
-    }
+    public void generateCase(Integer adminId, String password) {
+        adminService.verifyAdmin(adminId, password);
+        String prompt = """
+Generate a creative mystery case. The case type can be murder, theft, kidnapping, fraud, or any other interesting crime that fits a detective game.
+Choose the case type naturally. Choose suspect ages and witness reliability scores naturally based on their role in the case. Use this exact JSON structure:
+        {
+          "title": "case title",
+          "scenario": "detailed case scenario 3-5 sentences",
+          "difficulty": "EASY or MEDIUM or HARD",
+        "witnesses": [
+       {"name": "witness name", "statement": "witness statement", "reliabilityScore": score between 1 and 100 based on witness credibility},
+       {"name": "witness name", "statement": "witness statement", "reliabilityScore": score between 1 and 100 based on witness credibility},
+       {"name": "witness name", "statement": "witness statement", "reliabilityScore": score between 1 and 100 based on witness credibility}
+       ],,
+          "suspects": [
+            {"name": "suspect name", "age": choose_naturally},
+            {"name": "suspect name", "age": choose_naturally},
+            {"name": "suspect name", "age": choose_naturally},
+            {"name": "child suspect", "age": choose_between_8_and_14}
+          ],
+          "evidences": [
+            {"title": "evidence title", "description": "evidence description"},
+            {"title": "evidence title", "description": "evidence description"}
+          ],
+          "caseSolution": {
+            "justification": "full explanation of who did it and why"
+          }
+        }
+        Return ONLY the JSON, no extra text.
+        """;
 
-    private String chat(List<Map<String, String>> messages) {
+        String response = WebClient.builder()
+                .baseUrl("https://api.openai.com")
+                .build()
+                .post()
+                .uri("/v1/chat/completions")
+                .header("Authorization", "Bearer " + openAiApiKey)
+                .header("Content-Type", "application/json")
+                .bodyValue("""
+                        {
+                          "model": "gpt-4o-mini",
+                          "messages": [{"role": "user", "content": "%s"}],
+                          "temperature": 0.8
+                        }
+                        """.formatted(prompt.replace("\"", "\\\"").replace("\n", "\\n")))
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
+
         try {
-            if (apiKey == null || apiKey.isBlank()) {
-                return "";
-            }
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.setBearerAuth(apiKey); //API Key يرسل مصادقه
+            JsonNode root = objectMapper.readTree(response);
+            String content = root.path("choices").get(0).path("message").path("content").asText();
 
-            Map<String, Object> body = Map.of("model", "gpt-4o-mini", "messages", messages);
-            HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
-            Map<?, ?> response = restTemplate.postForObject(apiUrl, request, Map.class);//يرسل POST Request ويرجع الرد
+            content = content.replace("```json", "").replace("```", "").trim();
+            JsonNode caseJson = objectMapper.readTree(content);
 
-            if (response == null) {
-                return "";
+            Case newCase = new Case();
+            newCase.setTitle(caseJson.path("title").asText());
+            newCase.setScenario(caseJson.path("scenario").asText());
+            newCase.setDifficulty(caseJson.path("difficulty").asText());
+            newCase.setStatus("DRAFT");
+            caseRepository.save(newCase);
+
+            for (JsonNode w : caseJson.path("witnesses")) {
+                Witness witness = new Witness();
+                witness.setName(w.path("name").asText());
+                witness.setStatement(w.path("statement").asText());
+                witness.setReliabilityScore(w.path("reliabilityScore").asDouble());
+                witness.setWitnessCase(newCase);
+                witnessRepository.save(witness);
             }
 
-            List<?> choices = (List<?>) response.get("choices");
-            if (choices == null || choices.isEmpty()) {
-                return "";
+            for (JsonNode s : caseJson.path("suspects")) {
+                Suspect suspect = new Suspect();
+                suspect.setName(s.path("name").asText());
+                suspect.setAge(s.path("age").asInt());
+                suspect.setSuspectCase(newCase);
+                suspectRepository.save(suspect);
             }
-            Map<?, ?> choice = (Map<?, ?>) choices.get(0);
-            Map<?, ?> message = (Map<?, ?>) choice.get("message");
-            if (message == null || message.get("content") == null) {
-                return "";
+
+            for (JsonNode e : caseJson.path("evidences")) {
+                Evidence evidence = new Evidence();
+                evidence.setTitle(e.path("title").asText());
+                evidence.setDescription(e.path("description").asText());
+                evidence.setEvidenceCase(newCase);
+                evidenceRepository.save(evidence);
             }
-            return message.get("content").toString().trim();
+
+            //سلوشن مايطلع للبلايرز
+            CaseSolution solution = new CaseSolution();
+            solution.setJustification(caseJson.path("caseSolution").path("justification").asText());
+            solution.setSolutionCase(newCase);
+            caseSolutionRepository.save(solution);
+
         } catch (Exception e) {
-            return "";
+            throw new ApiException("Failed to parse AI response: " + e.getMessage());
         }
     }
-}
+
+    public void generateAndPublishCase(Integer adminId, String password) {
+        generateCase(adminId, password);
+        Case lastCase = caseRepository.findFirstByOrderByIdDesc();
+        if (lastCase == null) throw new ApiException("Case not found");
+        lastCase.setStatus("PUBLISHED");
+
+        caseRepository.save(lastCase);
+
+    }
+
+
+
+    // ─── GENERATE ANSWER ──────────────────────────────────────────────────────
+    public String generateAnswer(String prompt) {
+        String response = WebClient.builder()
+                .baseUrl("https://api.openai.com")
+                .build()
+                .post()
+                .uri("/v1/chat/completions")
+                .header("Authorization", "Bearer " + openAiApiKey)
+                .header("Content-Type", "application/json")
+                .bodyValue("""
+                        {
+                          "model": "gpt-4o-mini",
+                          "messages": [{"role": "user", "content": "%s"}],
+                          "temperature": 0.7
+                        }
+                        """.formatted(prompt.replace("\"", "\\\"").replace("\n", "\\n")))
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
+
+        try {
+            JsonNode root = objectMapper.readTree(response);
+            return root.path("choices").get(0).path("message").path("content").asText();
+        } catch (Exception e) {
+            throw new ApiException("Failed to generate answer: " + e.getMessage());
+        }
+    }
+
+
+    // ─── EVALUATE SOLUTION ────────────────────────────────────────────────────
+
+    public boolean evaluateSolution(String playerReason, String correctJustification) {
+        String prompt = """
+                You are a murder mystery judge.
+                
+                Correct solution: %s
+                
+                Player's answer: %s
+                
+                Does the player's answer correctly identify the culprit and the motive?
+                Reply with ONLY "true" or "false".
+                """.formatted(correctJustification, playerReason);
+
+        String response = WebClient.builder()
+                .baseUrl("https://api.openai.com").build().post().uri("/v1/chat/completions").header("Authorization", "Bearer " + openAiApiKey).header("Content-Type", "application/json")
+                .bodyValue("""
+                        {
+                          "model": "gpt-4o-mini",
+                          "messages": [{"role": "user", "content": "%s"}],
+                          "temperature": 0.0
+                        }
+                        """.formatted(prompt.replace("\"", "\\\"").replace("\n", "\\n")))
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
+
+        try {
+            JsonNode root = objectMapper.readTree(response);
+            String result = root.path("choices").get(0).path("message").path("content").asText().trim().toLowerCase();
+            return result.equals("true");
+        } catch (Exception e) {
+            throw new ApiException("Failed to evaluate solution: " + e.getMessage());
+        }
+    }
+
+    //calculate score
+
+    }

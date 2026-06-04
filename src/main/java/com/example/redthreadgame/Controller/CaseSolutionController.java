@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 public class CaseSolutionController {
     private final CaseSolutionService caseSolutionService;
 
-    @GetMapping("get/{caseId}")
+    @GetMapping("/get/{caseId}")
     public ResponseEntity<?> getCaseSolution(@PathVariable Integer caseId) {
         return ResponseEntity.ok(caseSolutionService.getCaseSolution(caseId));
     }
@@ -24,12 +24,12 @@ public class CaseSolutionController {
         caseSolutionService.addCaseSolution(caseId, dto);
         return ResponseEntity.status(200).body(new ApiResponse("Case solution added successfully"));
     }
-@PutMapping("update/{caseId}")
+@PutMapping("/update/{caseId}")
 public ResponseEntity<?> updateCaseSolution(@PathVariable Integer caseId, @RequestBody @Valid CaseSolutionIn dto) {
     caseSolutionService.updateCaseSolution(caseId, dto);
     return ResponseEntity.ok(new ApiResponse("Case solution updated successfully"));
 }
-    @DeleteMapping("delete/{caseId}")
+    @DeleteMapping("/delete/{caseId}")
     public ResponseEntity<?> deleteCaseSolution(@PathVariable Integer caseId) {
         caseSolutionService.deleteCaseSolution(caseId);
         return ResponseEntity.ok(new ApiResponse("Case solution deleted successfully"));
