@@ -68,18 +68,19 @@ public void publishCase(Integer id){
 
 //players show case
 public List<CaseOut> getPublishedCases() {
-
     List<CaseOut> cases = new ArrayList<>();
-
     for (Case c : caseRepository.findCasesByStatus("PUBLISHED")) {
-
         cases.add(modelMapper.map(c, CaseOut.class));
-
     }
 
     return cases;
 
 }
+ // for ai to genarte
+
+
+
+//helper method
     public Case checkCase(Integer id) {
 
         Case c = caseRepository.findCaseById(id);
