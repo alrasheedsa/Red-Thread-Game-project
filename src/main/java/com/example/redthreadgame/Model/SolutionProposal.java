@@ -1,5 +1,6 @@
 package com.example.redthreadgame.Model;
 
+import com.example.redthreadgame.Enums.SolutionProposalStatusType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
@@ -21,8 +22,9 @@ public class SolutionProposal {
     @Column(columnDefinition = "varchar(500) not null")
     private String reason;
 
-    @Column(columnDefinition = "varchar(20) not null")
-    private String status;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private SolutionProposalStatusType status;
 
     @Column(columnDefinition = "int not null")
     private Integer rejectCount;

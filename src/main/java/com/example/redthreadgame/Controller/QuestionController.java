@@ -32,14 +32,22 @@ public class QuestionController {
 
     @PostMapping("/add-witness/{gameSessionId}/{playerId}/{witnessId}")
     public ResponseEntity<?> addWitnessQuestion(@PathVariable Integer gameSessionId, @PathVariable Integer playerId, @PathVariable Integer witnessId, @RequestBody @Valid QuestionIn dto) {
-        questionService.addWitnessQuestion(gameSessionId, playerId, witnessId, dto);
-        return ResponseEntity.status(200).body(new ApiResponse("Witness question added successfully"));
+        return ResponseEntity.status(200).body(questionService.askWitnessQuestion(gameSessionId, playerId, witnessId, dto));
     }
 
     @PostMapping("/add-suspect/{gameSessionId}/{playerId}/{suspectId}")
     public ResponseEntity<?> addSuspectQuestion(@PathVariable Integer gameSessionId, @PathVariable Integer playerId, @PathVariable Integer suspectId, @RequestBody @Valid QuestionIn dto) {
-        questionService.addSuspectQuestion(gameSessionId, playerId, suspectId, dto);
-        return ResponseEntity.status(200).body(new ApiResponse("Suspect question added successfully"));
+        return ResponseEntity.status(200).body(questionService.askSuspectQuestion(gameSessionId, playerId, suspectId, dto));
+    }
+
+    @PostMapping("/ask-witness/{gameSessionId}/{playerId}/{witnessId}")
+    public ResponseEntity<?> askWitnessQuestion(@PathVariable Integer gameSessionId, @PathVariable Integer playerId, @PathVariable Integer witnessId, @RequestBody @Valid QuestionIn dto) {
+        return ResponseEntity.status(200).body(questionService.askWitnessQuestion(gameSessionId, playerId, witnessId, dto));
+    }
+
+    @PostMapping("/ask-suspect/{gameSessionId}/{playerId}/{suspectId}")
+    public ResponseEntity<?> askSuspectQuestion(@PathVariable Integer gameSessionId, @PathVariable Integer playerId, @PathVariable Integer suspectId, @RequestBody @Valid QuestionIn dto) {
+        return ResponseEntity.status(200).body(questionService.askSuspectQuestion(gameSessionId, playerId, suspectId, dto));
     }
 
     @PutMapping("/update/{questionId}")

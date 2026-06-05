@@ -3,12 +3,13 @@ package com.example.redthreadgame.Service;
 import com.example.redthreadgame.Api.ApiException;
 import com.example.redthreadgame.DTO.IN.HintIn;
 import com.example.redthreadgame.DTO.OUT.HintOut;
-import com.example.redthreadgame.Model.GameSession;
-import com.example.redthreadgame.Model.Hint;
-import com.example.redthreadgame.Model.Player;
+import com.example.redthreadgame.Enums.GameSessionStatusType;
+import com.example.redthreadgame.Enums.SessionPlayerStatus;
+import com.example.redthreadgame.Model.*;
 import com.example.redthreadgame.Repository.GameSessionRepository;
 import com.example.redthreadgame.Repository.HintRepository;
-import com.example.redthreadgame.Repository.PlayerRepository; // تم إضافة الاستيراد
+import com.example.redthreadgame.Repository.PlayerRepository;
+import com.example.redthreadgame.Repository.SessionPlayerRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,8 @@ public class HintService {
     private final HintRepository hintRepository;
     private final GameSessionRepository gameSessionRepository;
     private final PlayerRepository playerRepository;
+    private final SessionPlayerRepository sessionPlayerRepository;
+    private final OpenAiService openAiService;
     private final ModelMapper modelMapper;
 
     public List<HintOut> getHintsByGameSession(Integer gameSessionId) {
@@ -40,29 +43,73 @@ public class HintService {
                 .orElseThrow(() -> new ApiException("Game session not found"));
 
         Hint hint = modelMapper.map(dto, Hint.class);
+        hint.setDeductedPoints(5);
         hint.setGameSession(gameSession);
 
         hintRepository.save(hint);
     }
 
-    public void requestHint(Integer gameSessionId, Integer playerId) {
+    public HintOut requestHint(Integer gameSessionId, Integer playerId) {
         GameSession gameSession = gameSessionRepository.findById(gameSessionId)
                 .orElseThrow(() -> new ApiException("Game session not found"));
 
         Player player = playerRepository.findById(playerId)
                 .orElseThrow(() -> new ApiException("Player not found"));
 
+        checkCanPlay(gameSession, player);
+
+        Case sessionCase = gameSession.getSessionCase();
+        String prompt = """
+                You are generating a hint for a detective mystery game.
+
+                Rules:
+                - Give exactly one useful hint.
+                - Do not reveal the culprit directly.
+                - Do not reveal the full solution.
+                - Do not invent new facts, evidence, witnesses, suspects, places, or events.
+                - Guide the player toward an important clue, contradiction, witness detail, suspect behavior, or evidence.
+                - Make the hint specific to this case.
+                - Keep it short and natural.
+                - Answer in Arabic if possible.
+
+                Case title:
+                %s
+
+                Case scenario:
+                %s
+
+                Witnesses:
+                %s
+
+                Suspects:
+                %s
+
+                Evidences:
+                %s
+
+                Hint:
+                """.formatted(
+                sessionCase.getTitle(),
+                sessionCase.getScenario(),
+                buildWitnessesText(sessionCase),
+                buildSuspectsText(sessionCase),
+                buildEvidencesText(sessionCase)
+        );
+
+        String hintContent = openAiService.generateAnswer(prompt);
+
         Hint hint = new Hint();
-        hint.setContent("Focus on the strongest evidence and compare it with the suspect timeline");
+        hint.setContent(hintContent);
         hint.setDeductedPoints(5);
         hint.setGameSession(gameSession);
         hint.setPlayer(player);
 
         hintRepository.save(hint);
+        return modelMapper.map(hint, HintOut.class);
     }
 
     public List<HintOut> getHintsByPlayer(Integer playerId) {
-        Player player = playerRepository.findById(playerId)
+        playerRepository.findById(playerId)
                 .orElseThrow(() -> new ApiException("Player not found"));
 
         List<HintOut> hints = new ArrayList<>();
@@ -78,11 +125,20 @@ public class HintService {
         gameSessionRepository.findById(gameSessionId)
                 .orElseThrow(() -> new ApiException("Game session not found"));
 
-        List<Hint> hints = hintRepository.findAllByGameSessionId(gameSessionId);
+        Integer totalPenalty = 0;
+        for (Hint h : hintRepository.findAllByGameSessionId(gameSessionId)) {
+            if (h.getDeductedPoints() != null)
+                totalPenalty += h.getDeductedPoints();
+        }
 
-        // افتراض: كل تلميح مستخدم يخصم 5 نقاط من اللاعب
-        int penaltyPerHint = 5;
-        return hints.size() * penaltyPerHint;
+        return totalPenalty;
+    }
+
+    public Integer calculateTotalScore(Integer gameSessionId) {
+        Integer totalScore = 100 - calculateHintPenalty(gameSessionId);
+        if (totalScore < 0)
+            return 0;
+        return totalScore;
     }
 
     public void deleteHint(Integer hintId) {
@@ -90,5 +146,38 @@ public class HintService {
                 .orElseThrow(() -> new ApiException("Hint not found"));
 
         hintRepository.delete(hint);
+    }
+
+    private void checkCanPlay(GameSession gameSession, Player player) {
+        if (gameSession.getStatus() != GameSessionStatusType.IN_PROGRESS)
+            throw new ApiException("Game session is not in progress");
+
+        SessionPlayer sessionPlayer = sessionPlayerRepository.findByGameSessionAndPlayer(gameSession, player);
+        if (sessionPlayer == null || sessionPlayer.getStatus() != SessionPlayerStatus.JOINED)
+            throw new ApiException("Player is not joined in this game session");
+    }
+
+    private String buildWitnessesText(Case sessionCase) {
+        String text = "";
+        for (Witness w : sessionCase.getWitnesses()) {
+            text += "- " + w.getName() + ": " + w.getStatement() + " Reliability: " + w.getReliabilityScore() + "\n";
+        }
+        return text;
+    }
+
+    private String buildSuspectsText(Case sessionCase) {
+        String text = "";
+        for (Suspect s : sessionCase.getSuspects()) {
+            text += "- " + s.getName() + ", age " + s.getAge() + "\n";
+        }
+        return text;
+    }
+
+    private String buildEvidencesText(Case sessionCase) {
+        String text = "";
+        for (Evidence e : sessionCase.getEvidences()) {
+            text += "- " + e.getTitle() + ": " + e.getDescription() + "\n";
+        }
+        return text;
     }
 }
