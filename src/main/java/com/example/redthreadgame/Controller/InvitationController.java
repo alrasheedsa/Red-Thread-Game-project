@@ -33,12 +33,6 @@ public class InvitationController {
 
 
     //EXTRA ENDPOINTS
-    @PutMapping("/accept-invitation/{gameSessionId}/{playerId}")
-    public ResponseEntity<?> acceptInvitation(@PathVariable Integer gameSessionId, @PathVariable Integer playerId){
-        invitationService.acceptInvitation(gameSessionId, playerId);
-        return ResponseEntity.status(200).body(new ApiResponse("Invitation accepted successfully"));
-    }
-
     @PutMapping("/reject-invitation/{gameSessionId}/{playerId}")
     public ResponseEntity<?> rejectInvitation(@PathVariable Integer gameSessionId, @PathVariable Integer playerId){
         invitationService.rejectInvitation(gameSessionId, playerId);

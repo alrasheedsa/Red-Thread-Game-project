@@ -1,5 +1,7 @@
 package com.example.redthreadgame.Repository;
 
+import com.example.redthreadgame.Enums.GameSessionStatusType;
+import com.example.redthreadgame.Enums.SessionPlayerStatus;
 import com.example.redthreadgame.Model.GameSession;
 import com.example.redthreadgame.Model.Player;
 import com.example.redthreadgame.Model.SessionPlayer;
@@ -15,9 +17,15 @@ public interface SessionPlayerRepository extends JpaRepository<SessionPlayer, In
 
     boolean existsByGameSessionAndPlayer(GameSession gameSession, Player player);
 
-    int countByGameSession(GameSession gameSession);
+    int countByGameSessionAndStatus(GameSession gameSession, SessionPlayerStatus status);
 
     List<SessionPlayer> findAllByGameSessionId(Integer gameSessionId);
 
     List<SessionPlayer> findAllByPlayerId(Integer playerId);
+
+    SessionPlayer findByGameSessionAndPlayer(GameSession gameSession, Player player);
+
+    boolean existsByPlayerIdAndGameSession_SessionCase_Id(Integer playerId, Integer caseId);
+
+    boolean existsByPlayerIdAndGameSession_StatusIn(Integer playerId, List<GameSessionStatusType> statuses);
 }

@@ -1,7 +1,6 @@
 package com.example.redthreadgame.DTO.OUT;
 
 import com.example.redthreadgame.Enums.GameSessionStatusType;
-import com.example.redthreadgame.Model.SessionPlayer;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,7 +16,6 @@ public class GameSessionOut {
     private Integer id;
     private GameSessionStatusType status;
     private Boolean isPrivate;
-    private String sessionCode;
     private Integer playersCount;
     private Integer questionsCount;
     private Integer score;

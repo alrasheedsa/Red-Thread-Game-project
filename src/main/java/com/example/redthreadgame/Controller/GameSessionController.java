@@ -64,9 +64,20 @@ public class GameSessionController {
         return ResponseEntity.status(200).body(new ApiResponse("Joined game session successfully"));
     }
 
-    @PutMapping("/start/{gameSessionId}/{playerId}")
-    public ResponseEntity<?> startSession(@PathVariable Integer gameSessionId, @PathVariable Integer playerId){
-        gameSessionService.startSession(gameSessionId, playerId);
-        return ResponseEntity.status(200).body(new ApiResponse("Game session started successfully"));
+    @DeleteMapping("/leave/{gameSessionId}/{playerId}")
+    public ResponseEntity<?> leaveSession(@PathVariable Integer gameSessionId, @PathVariable Integer playerId){
+        gameSessionService.leaveSession(gameSessionId, playerId);
+        return ResponseEntity.status(200).body(new ApiResponse("Left session successfully"));
+    }
+
+    @PutMapping("/cancel/{gameSessionId}/{playerId}")
+    public ResponseEntity<?> cancelSession(@PathVariable Integer gameSessionId, @PathVariable Integer playerId){
+        gameSessionService.cancelSession(gameSessionId, playerId);
+        return ResponseEntity.status(200).body(new ApiResponse("Game session cancelled successfully"));
+    }
+
+    @GetMapping("/lobby/{gameSessionId}")
+    public ResponseEntity<?> getLobby(@PathVariable Integer gameSessionId){
+        return ResponseEntity.status(200).body(gameSessionService.getLobby(gameSessionId));
     }
 }
