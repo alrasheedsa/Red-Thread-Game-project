@@ -21,4 +21,10 @@ public class WitnessIn {
     @Min(value = 0 , message = "reliability score minimum is 0")
     @Max(value = 100 , message = "reliability score maximum is 100")
     private Double reliabilityScore;
+
+    @NotEmpty(message = "gender cannot be empty")
+    private String gender;
+
+    @NotEmpty(message = "voice tone cannot be empty")
+    private String voiceTone;
 }

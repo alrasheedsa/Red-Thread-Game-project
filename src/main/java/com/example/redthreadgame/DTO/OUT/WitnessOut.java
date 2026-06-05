@@ -14,4 +14,6 @@ public class WitnessOut {
     private String name;
     private String statement;
     private Double reliabilityScore;
+    private String gender;
+    private String voiceTone;
 }

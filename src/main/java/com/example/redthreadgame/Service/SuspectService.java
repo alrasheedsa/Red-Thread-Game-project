@@ -42,6 +42,8 @@ public class SuspectService {
         Suspect old = checkSuspect(id);
         old.setName(dto.getName());
         old.setAge(dto.getAge());
+        old.setGender(dto.getGender());
+        old.setVoiceTone(dto.getVoiceTone());
 
         suspectRepository.save(old);
     }
@@ -65,6 +67,9 @@ public class SuspectService {
 
         String prompt = "Suspect name: " + suspect.getName()
                 + "\nSuspect age: " + suspect.getAge()
+                + "\nSuspect gender: " + suspect.getGender()
+                + "\nSuspect voice tone: " + suspect.getVoiceTone()
+                + "\nRules: Answer in English only. Match the suspect voice tone naturally. Do not include stage directions, brackets, emotion labels, or sound effects."
                 + "\nPlayer question: " + dto.getQuestionText();
 
         String answer = openAiService.generateAnswer(prompt);
@@ -72,7 +77,7 @@ public class SuspectService {
             answer = "I do not have anything else to say right now.";
         }
 
-        String audioFileName = elevenLabsService.generateVoice(answer);
+        String audioFileName = elevenLabsService.generateVoice(answer, suspect.getGender(), suspect.getVoiceTone());
         return new VoiceAnswerOut(answer, audioFileName);
     }
 

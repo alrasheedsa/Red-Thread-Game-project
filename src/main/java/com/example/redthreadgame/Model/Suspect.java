@@ -27,6 +27,12 @@ public class Suspect {
     @Column(nullable = false)
     private Integer age;
 
+    @Column(nullable = false)
+    private String gender;
+
+    @Column(nullable = false)
+    private String voiceTone;
+
     @ManyToOne
     @JoinColumn(name = "case_id")
     @JsonIgnore

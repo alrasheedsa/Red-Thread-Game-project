@@ -70,7 +70,7 @@ public class HintService {
                 - Guide the player toward an important clue, contradiction, witness detail, suspect behavior, or evidence.
                 - Make the hint specific to this case.
                 - Keep it short and natural.
-                - Answer in Arabic if possible.
+                - Answer in English.
 
                 Case title:
                 %s
@@ -97,14 +97,17 @@ public class HintService {
         );
 
         String hintContent = openAiService.generateAnswer(prompt);
+        Integer hintsCount = hintRepository.findAllByGameSessionId(gameSession.getId()).size() + 1;
+        Integer deductedPoints = hintsCount > 1 ? 3 : 0;
 
         Hint hint = new Hint();
         hint.setContent(hintContent);
-        hint.setDeductedPoints(5);
+        hint.setDeductedPoints(deductedPoints);
         hint.setGameSession(gameSession);
         hint.setPlayer(player);
 
         hintRepository.save(hint);
+        deductHintScoreIfNeeded(gameSession, deductedPoints);
         return modelMapper.map(hint, HintOut.class);
     }
 
@@ -135,10 +138,10 @@ public class HintService {
     }
 
     public Integer calculateTotalScore(Integer gameSessionId) {
-        Integer totalScore = 100 - calculateHintPenalty(gameSessionId);
-        if (totalScore < 0)
-            return 0;
-        return totalScore;
+        GameSession gameSession = gameSessionRepository.findById(gameSessionId)
+                .orElseThrow(() -> new ApiException("Game session not found"));
+
+        return gameSession.getScore();
     }
 
     public void deleteHint(Integer hintId) {
@@ -155,6 +158,13 @@ public class HintService {
         SessionPlayer sessionPlayer = sessionPlayerRepository.findByGameSessionAndPlayer(gameSession, player);
         if (sessionPlayer == null || sessionPlayer.getStatus() != SessionPlayerStatus.JOINED)
             throw new ApiException("Player is not joined in this game session");
+    }
+
+    private void deductHintScoreIfNeeded(GameSession gameSession, Integer deductedPoints) {
+        if (deductedPoints > 0) {
+            gameSession.setScore(Math.max(0, gameSession.getScore() - deductedPoints));
+            gameSessionRepository.save(gameSession);
+        }
     }
 
     private String buildWitnessesText(Case sessionCase) {

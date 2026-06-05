@@ -33,22 +33,27 @@ public class OpenAiService {
     public void generateCase(Integer adminId, String password) {
         adminService.verifyAdmin(adminId, password);
         String prompt = """
-                Generate a creative mystery case. The case type can be murder, theft, kidnapping, fraud, or any other interesting crime that fits a detective game.
-                Choose the case type naturally. Choose suspect ages and witness reliability scores naturally based on their role in the case. Use this exact JSON structure:
+                Generate a creative mystery case in English only. The case type can be murder, theft, kidnapping, fraud, or any other interesting crime that fits a detective game.
+                Choose the case type naturally. Choose suspect ages and witness reliability scores naturally based on their role in the case.
+                For every witness and suspect, choose gender and voiceTone.
+                gender must be only: MALE or FEMALE.
+                voiceTone must be only one of: CALM, NERVOUS, DEFENSIVE, SUSPICIOUS, SAD, CONFIDENT.
+                Choose the tone based on the character role in the mystery.
+                Use this exact JSON structure:
                         {
                           "title": "case title",
                           "scenario": "detailed case scenario 3-5 sentences",
                           "difficulty": "EASY or MEDIUM or HARD",
                         "witnesses": [
-                       {"name": "witness name", "statement": "witness statement", "reliabilityScore": score between 1 and 100 based on witness credibility},
-                       {"name": "witness name", "statement": "witness statement", "reliabilityScore": score between 1 and 100 based on witness credibility},
-                       {"name": "witness name", "statement": "witness statement", "reliabilityScore": score between 1 and 100 based on witness credibility}
+                       {"name": "witness name", "statement": "witness statement", "reliabilityScore": score between 1 and 100 based on witness credibility, "gender": "MALE or FEMALE", "voiceTone": "CALM or NERVOUS or DEFENSIVE or SUSPICIOUS or SAD or CONFIDENT"},
+                       {"name": "witness name", "statement": "witness statement", "reliabilityScore": score between 1 and 100 based on witness credibility, "gender": "MALE or FEMALE", "voiceTone": "CALM or NERVOUS or DEFENSIVE or SUSPICIOUS or SAD or CONFIDENT"},
+                       {"name": "witness name", "statement": "witness statement", "reliabilityScore": score between 1 and 100 based on witness credibility, "gender": "MALE or FEMALE", "voiceTone": "CALM or NERVOUS or DEFENSIVE or SUSPICIOUS or SAD or CONFIDENT"}
                        ],
                           "suspects": [
-                            {"name": "suspect name", "age": choose_naturally},
-                            {"name": "suspect name", "age": choose_naturally},
-                            {"name": "suspect name", "age": choose_naturally},
-                            {"name": "child suspect", "age": choose_between_8_and_14}
+                            {"name": "suspect name", "age": choose_naturally, "gender": "MALE or FEMALE", "voiceTone": "CALM or NERVOUS or DEFENSIVE or SUSPICIOUS or SAD or CONFIDENT"},
+                            {"name": "suspect name", "age": choose_naturally, "gender": "MALE or FEMALE", "voiceTone": "CALM or NERVOUS or DEFENSIVE or SUSPICIOUS or SAD or CONFIDENT"},
+                            {"name": "suspect name", "age": choose_naturally, "gender": "MALE or FEMALE", "voiceTone": "CALM or NERVOUS or DEFENSIVE or SUSPICIOUS or SAD or CONFIDENT"},
+                            {"name": "child suspect", "age": choose_between_8_and_14, "gender": "MALE or FEMALE", "voiceTone": "CALM or NERVOUS or DEFENSIVE or SUSPICIOUS or SAD or CONFIDENT"}
                           ],
                           "evidences": [
                             {"title": "evidence title", "description": "evidence description"},
@@ -95,6 +100,8 @@ public class OpenAiService {
                 witness.setName(w.path("name").asText());
                 witness.setStatement(w.path("statement").asText());
                 witness.setReliabilityScore(w.path("reliabilityScore").asDouble());
+                witness.setGender(normalizeGender(w.path("gender").asText()));
+                witness.setVoiceTone(normalizeVoiceTone(w.path("voiceTone").asText(), "CALM"));
                 witness.setWitnessCase(newCase);
                 witnessRepository.save(witness);
             }
@@ -103,6 +110,8 @@ public class OpenAiService {
                 Suspect suspect = new Suspect();
                 suspect.setName(s.path("name").asText());
                 suspect.setAge(s.path("age").asInt());
+                suspect.setGender(normalizeGender(s.path("gender").asText()));
+                suspect.setVoiceTone(normalizeVoiceTone(s.path("voiceTone").asText(), "DEFENSIVE"));
                 suspect.setSuspectCase(newCase);
                 suspectRepository.save(suspect);
             }
@@ -192,17 +201,29 @@ public class OpenAiService {
         }
     }
     //evaluation solution
-    public boolean evaluateSolution(String playerReason, String correctJustification) {
+    public boolean evaluateSolution(String playerReason, String accusedSuspectName, Integer accusedSuspectAge, String correctJustification) {
         String prompt = """
                 You are a mystery game judge.
                 
-                Correct solution: %s
+                Correct solution justification:
+                %s
                 
-                Player's answer: %s
+                Player accused suspect:
+                Name: %s
+                Age: %s
                 
-                Does the player's answer correctly identify the culprit and the motive?
+                Player reason:
+                %s
+                
+                The correct suspect is not stored in a separate database field.
+                Extract the correct suspect from the correct solution justification.
+                
+                Return true only if:
+                - The accused suspect matches the culprit in the correct solution justification.
+                - The player's reason reasonably matches the correct motive and evidence.
+                
                 Reply with ONLY "true" or "false".
-                """.formatted(correctJustification, playerReason);
+                """.formatted(correctJustification, accusedSuspectName, accusedSuspectAge, playerReason);
 
         String response = WebClient.builder()
                 .baseUrl("https://api.openai.com").build().post().uri("/v1/chat/completions").header("Authorization", "Bearer " + openAiApiKey).header("Content-Type", "application/json")
@@ -231,5 +252,23 @@ public class OpenAiService {
         int hintPenalty = hintCount * 10;
         int finalScore = baseScore - questionPenalty - hintPenalty;
         return Math.max(1, finalScore);
+    }
+
+    private String normalizeGender(String gender) {
+        if ("FEMALE".equalsIgnoreCase(gender))
+            return "FEMALE";
+        return "MALE";
+    }
+
+    private String normalizeVoiceTone(String voiceTone, String defaultTone) {
+        if (voiceTone == null)
+            return defaultTone;
+
+        String tone = voiceTone.toUpperCase();
+        if (tone.equals("CALM") || tone.equals("NERVOUS") || tone.equals("DEFENSIVE") ||
+                tone.equals("SUSPICIOUS") || tone.equals("SAD") || tone.equals("CONFIDENT"))
+            return tone;
+
+        return defaultTone;
     }
     }

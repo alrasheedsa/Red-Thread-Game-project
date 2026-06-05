@@ -23,16 +23,24 @@ public class ElevenLabsService {
     @Value("${elevenlabs.api.url}")
     private String apiUrl;
 
-    @Value("${elevenlabs.voice.id}")
-    private String voiceId;
+    @Value("${elevenlabs.voice.male}")
+    private String maleVoiceId;
+
+    @Value("${elevenlabs.voice.female}")
+    private String femaleVoiceId;
 
     private final RestTemplate restTemplate = new RestTemplate();
 
     public String generateVoice(String text) {
+        return generateVoice(text, "MALE", "CALM");
+    }
+
+    public String generateVoice(String text, String gender, String voiceTone) {
         try {
             if (apiKey == null || apiKey.isBlank()) {
                 throw new ApiException("ElevenLabs API key is missing");
             }
+            String voiceId = resolveVoiceId(gender);
             if (voiceId == null || voiceId.isBlank()) {
                 throw new ApiException("ElevenLabs voice id is missing");
             }
@@ -41,9 +49,17 @@ public class ElevenLabsService {
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.set("xi-api-key", apiKey);
 
+            Map<String, Object> voiceSettings = Map.of(
+                    "stability", getStability(voiceTone),
+                    "similarity_boost", 0.85,
+                    "style", getStyleExaggeration(voiceTone),
+                    "use_speaker_boost", true
+            );
+
             Map<String, Object> body = Map.of(
                     "text", text,
-                    "model_id", "eleven_multilingual_v2"
+                    "model_id", "eleven_multilingual_v2",
+                    "voice_settings", voiceSettings
             );
 
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
@@ -65,5 +81,30 @@ public class ElevenLabsService {
         } catch (Exception e) {
             throw new ApiException("Failed to generate voice");
         }
+    }
+
+    private String resolveVoiceId(String gender) {
+        if ("FEMALE".equalsIgnoreCase(gender)) {
+            return femaleVoiceId;
+        }
+        return maleVoiceId;
+    }
+
+    private Double getStability(String voiceTone) {
+        if ("NERVOUS".equalsIgnoreCase(voiceTone)) return 0.30;
+        if ("DEFENSIVE".equalsIgnoreCase(voiceTone)) return 0.40;
+        if ("SUSPICIOUS".equalsIgnoreCase(voiceTone)) return 0.35;
+        if ("SAD".equalsIgnoreCase(voiceTone)) return 0.45;
+        if ("CONFIDENT".equalsIgnoreCase(voiceTone)) return 0.65;
+        return 0.55;
+    }
+
+    private Double getStyleExaggeration(String voiceTone) {
+        if ("NERVOUS".equalsIgnoreCase(voiceTone)) return 0.65;
+        if ("DEFENSIVE".equalsIgnoreCase(voiceTone)) return 0.55;
+        if ("SUSPICIOUS".equalsIgnoreCase(voiceTone)) return 0.60;
+        if ("SAD".equalsIgnoreCase(voiceTone)) return 0.45;
+        if ("CONFIDENT".equalsIgnoreCase(voiceTone)) return 0.35;
+        return 0.40;
     }
 }

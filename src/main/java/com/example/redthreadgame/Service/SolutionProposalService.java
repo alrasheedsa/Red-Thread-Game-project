@@ -32,6 +32,7 @@ public class SolutionProposalService {
     private final CaseSolutionRepository caseSolutionRepository;
     private final HintService hintService;
     private final OpenAiService openAiService;
+    private final EmailService emailService;
     private final ModelMapper modelMapper;
 
     public List<SolutionProposalOut> getProposalsByGameSession(Integer gameSessionId) {
@@ -118,14 +119,30 @@ public class SolutionProposalService {
         if (gameSession.getStatus() != GameSessionStatusType.IN_PROGRESS)
             throw new ApiException("Game session is not in progress");
 
-        if (proposal.getAcceptCount() <= gameSession.getPlayersCount() / 2)
+        Integer requiredVotes = (int) Math.ceil(gameSession.getPlayersCount() / 2.0);
+        if (proposal.getAcceptCount() < requiredVotes)
             throw new ApiException("Proposal does not have majority accepted votes");
 
         CaseSolution solution = caseSolutionRepository.findCaseSolutionById(gameSession.getSessionCase().getId());
         if (solution == null)
             throw new ApiException("Case solution not found");
 
-        Boolean isCorrect = openAiService.evaluateSolution(proposal.getReason(), solution.getJustification());
+        List<SessionPlayer> joinedPlayers = new ArrayList<>();
+        for (SessionPlayer s : sessionPlayerRepository.findAllByGameSessionId(gameSession.getId())) {
+            if (s.getStatus() == SessionPlayerStatus.JOINED) {
+                joinedPlayers.add(s);
+            }
+        }
+
+        if (joinedPlayers.isEmpty())
+            throw new ApiException("No joined players found in this game session");
+
+        Boolean isCorrect = openAiService.evaluateSolution(
+                proposal.getReason(),
+                proposal.getSuspect().getName(),
+                proposal.getSuspect().getAge(),
+                solution.getJustification()
+        );
         if (!isCorrect) {
             proposal.setStatus(SolutionProposalStatusType.WRONG);
             gameSession.setScore(0);
@@ -133,27 +150,27 @@ public class SolutionProposalService {
             gameSession.setEndedAt(LocalDateTime.now());
             gameSessionRepository.save(gameSession);
             solutionProposalRepository.save(proposal);
+            notifyPlayersWrongSolution(gameSession, proposal, joinedPlayers);
             return 0;
         }
 
         Integer totalScore = hintService.calculateTotalScore(gameSession.getId());
+        Integer playerScore = totalScore / joinedPlayers.size();
+
         proposal.setStatus(SolutionProposalStatusType.CORRECT);
         gameSession.setScore(totalScore);
         gameSession.setStatus(GameSessionStatusType.COMPLETED);
         gameSession.setEndedAt(LocalDateTime.now());
 
-        for (SessionPlayer s : sessionPlayerRepository.findAllByGameSessionId(gameSession.getId())) {
-            if (s.getStatus() == SessionPlayerStatus.JOINED) {
-                Player player = s.getPlayer();
-                if (player.getScore() == null)
-                    player.setScore(0);
-                player.setScore(player.getScore() + totalScore);
-                playerRepository.save(player);
-            }
+        for (SessionPlayer s : joinedPlayers) {
+            Player player = s.getPlayer();
+            player.setScore(player.getScore() + playerScore);
+            playerRepository.save(player);
         }
 
         gameSessionRepository.save(gameSession);
         solutionProposalRepository.save(proposal);
+        notifyPlayersCorrectSolution(gameSession, proposal, totalScore, playerScore, joinedPlayers);
         return totalScore;
     }
 
@@ -164,5 +181,43 @@ public class SolutionProposalService {
         SessionPlayer sessionPlayer = sessionPlayerRepository.findByGameSessionAndPlayer(gameSession, player);
         if (sessionPlayer == null || sessionPlayer.getStatus() != SessionPlayerStatus.JOINED)
             throw new ApiException("Player is not joined in this game session");
+    }
+
+    private void notifyPlayersCorrectSolution(GameSession gameSession, SolutionProposal proposal, Integer totalScore, Integer playerScore, List<SessionPlayer> joinedPlayers) {
+        for (SessionPlayer s : joinedPlayers) {
+            Player player = s.getPlayer();
+            emailService.send(
+                    player.getEmail(),
+                    "Red Thread Game Result - Case Solved",
+                    "Dear " + player.getName() + ",\n\n" +
+                            "Your team solved the case successfully.\n\n" +
+                            "Case: " + gameSession.getSessionCase().getTitle() + "\n" +
+                            "Accused suspect: " + proposal.getSuspect().getName() + "\n" +
+                            "Final session score: " + totalScore + "\n" +
+                            "Your earned score: " + playerScore + "\n" +
+                            "Ended at: " + gameSession.getEndedAt() + "\n\n" +
+                            "Great detective work.\n\n" +
+                            "Red Thread Game Team"
+            );
+        }
+    }
+
+    private void notifyPlayersWrongSolution(GameSession gameSession, SolutionProposal proposal, List<SessionPlayer> joinedPlayers) {
+        for (SessionPlayer s : joinedPlayers) {
+            Player player = s.getPlayer();
+            emailService.send(
+                    player.getEmail(),
+                    "Red Thread Game Result - Case Failed",
+                    "Dear " + player.getName() + ",\n\n" +
+                            "Your team submitted a wrong solution.\n\n" +
+                            "Case: " + gameSession.getSessionCase().getTitle() + "\n" +
+                            "Accused suspect: " + proposal.getSuspect().getName() + "\n" +
+                            "Final session score: 0\n" +
+                            "Your earned score: 0\n" +
+                            "Ended at: " + gameSession.getEndedAt() + "\n\n" +
+                            "Better luck next investigation.\n\n" +
+                            "Red Thread Game Team"
+            );
+        }
     }
 }

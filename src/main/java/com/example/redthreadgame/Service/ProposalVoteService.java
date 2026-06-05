@@ -31,6 +31,7 @@ public class ProposalVoteService {
     private final SolutionProposalRepository solutionProposalRepository;
     private final PlayerRepository playerRepository;
     private final SessionPlayerRepository sessionPlayerRepository;
+    private final SolutionProposalService solutionProposalService;
     private final ModelMapper modelMapper;
 
     public List<ProposalVoteOut> getAllProposalVotes() {
@@ -87,6 +88,9 @@ public class ProposalVoteService {
         updateProposalStatusByMajority(proposal);
         proposalVoteRepository.save(proposalVote);
         solutionProposalRepository.save(proposal);
+
+        if (proposal.getStatus() == SolutionProposalStatusType.ACCEPTED_BY_PLAYERS)
+            solutionProposalService.evaluateProposal(proposal.getId());
     }
 
     public void updateProposalVote(Integer voteId, ProposalVoteIn dto) {
@@ -117,16 +121,16 @@ public class ProposalVoteService {
         SolutionProposal proposal = solutionProposalRepository.findById(proposalId)
                 .orElseThrow(() -> new ApiException("Solution proposal not found"));
 
-        Integer playersCount = proposal.getGameSession().getPlayersCount();
-        return proposal.getAcceptCount() > playersCount / 2;
+        Integer requiredVotes = getRequiredVotes(proposal);
+        return proposal.getAcceptCount() >= requiredVotes;
     }
 
     public Boolean hasMajorityRejected(Integer proposalId) {
         SolutionProposal proposal = solutionProposalRepository.findById(proposalId)
                 .orElseThrow(() -> new ApiException("Solution proposal not found"));
 
-        Integer playersCount = proposal.getGameSession().getPlayersCount();
-        return proposal.getRejectCount() > playersCount / 2;
+        Integer requiredVotes = getRequiredVotes(proposal);
+        return proposal.getRejectCount() >= requiredVotes;
     }
 
     private ProposalVote checkProposalVote(Integer id) {
@@ -159,15 +163,22 @@ public class ProposalVoteService {
         if (sessionPlayer == null || sessionPlayer.getStatus() != SessionPlayerStatus.JOINED)
             throw new ApiException("Player is not joined in this game session");
 
+        if (proposal.getPlayer().getId().equals(player.getId()))
+            throw new ApiException("Proposal owner cannot vote on his own proposal");
+
         if (proposal.getStatus() != SolutionProposalStatusType.PENDING)
             throw new ApiException("You cannot vote on this proposal");
     }
 
     private void updateProposalStatusByMajority(SolutionProposal proposal) {
-        Integer playersCount = proposal.getGameSession().getPlayersCount();
-        if (proposal.getAcceptCount() > playersCount / 2)
+        Integer requiredVotes = getRequiredVotes(proposal);
+        if (proposal.getAcceptCount() >= requiredVotes)
             proposal.setStatus(SolutionProposalStatusType.ACCEPTED_BY_PLAYERS);
-        else if (proposal.getRejectCount() > playersCount / 2)
+        else if (proposal.getRejectCount() >= requiredVotes)
             proposal.setStatus(SolutionProposalStatusType.REJECTED_BY_PLAYERS);
+    }
+
+    private Integer getRequiredVotes(SolutionProposal proposal) {
+        return (int) Math.ceil(proposal.getGameSession().getPlayersCount() / 2.0);
     }
 }
