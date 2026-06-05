@@ -132,6 +132,7 @@ public class QuestionService {
         question.setCreatedAt(LocalDateTime.now());
 
         questionRepository.save(question);
+        deductQuestionScoreIfNeeded(gameSession);
         return new VoiceAnswerOut(answer, audioFileName);
     }
 
@@ -204,6 +205,7 @@ public class QuestionService {
         question.setCreatedAt(LocalDateTime.now());
 
         questionRepository.save(question);
+        deductQuestionScoreIfNeeded(gameSession);
         return new VoiceAnswerOut(answer, audioFileName);
     }
 
@@ -282,6 +284,17 @@ public class QuestionService {
 
 
     //لترتيب output ask witness& Suspect
+    private void deductQuestionScoreIfNeeded(GameSession gameSession) {
+        Integer questionsCount = questionRepository.findAllByGameSessionId(gameSession.getId()).size();
+        gameSession.setQuestionsCount(questionsCount);
+
+        if (questionsCount > 2) {
+            gameSession.setScore(Math.max(0, gameSession.getScore() - 2));
+        }
+
+        gameSessionRepository.save(gameSession);
+    }
+
     private String buildWitnessesText(Case sessionCase) {
         String text = "";
         for (Witness w : sessionCase.getWitnesses()) {

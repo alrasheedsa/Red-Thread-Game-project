@@ -24,7 +24,7 @@ public class AdminController {
     @PostMapping("/add")
     public ResponseEntity<?> addAdmin(@RequestBody @Valid AdminIn dto) {
         adminService.addAdmin(dto);
-        return ResponseEntity.status(200).body(new ApiResponse("Admin updated successfully"));
+        return ResponseEntity.status(200).body(new ApiResponse("Admin Added successfully"));
     }
 
     @PutMapping("/update/{id}")
