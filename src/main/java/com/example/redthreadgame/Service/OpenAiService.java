@@ -177,12 +177,4 @@ public class OpenAiService {
         }
     }
 
-    //calculate score
-    public Integer calculateScore(Integer questionCount, Integer hintCount) {
-        int baseScore = 100;
-        int questionPenalty = questionCount * 5;
-        int hintPenalty = hintCount * 10;
-        int finalScore = baseScore - questionPenalty - hintPenalty;
-        return Math.max(1, finalScore);
-    }
     }
