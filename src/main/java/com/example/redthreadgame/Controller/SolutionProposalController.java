@@ -59,8 +59,8 @@ public class SolutionProposalController {
         solutionProposalService.markProposalWrong(proposalId);
         return ResponseEntity.status(200).body(new ApiResponse("Solution proposal marked wrong successfully"));
     }
-//    @PutMapping("/evaluate/{proposalId}")
-//    public ResponseEntity<?> evaluateProposal(@PathVariable Integer proposalId) {
-//        solutionProposalService.evaluateProposal(proposalId);
-//    }
+    @PutMapping("/evaluate/{proposalId}")
+    public ResponseEntity<?> evaluateProposal(@PathVariable Integer proposalId) {
+        return ResponseEntity.status(200).body(solutionProposalService.evaluateProposal(proposalId));
+    }
 }
