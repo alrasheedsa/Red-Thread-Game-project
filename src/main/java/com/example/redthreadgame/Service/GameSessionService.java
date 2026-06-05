@@ -12,12 +12,9 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 import static com.example.redthreadgame.Enums.GameSessionStatusType.*;
-import static com.example.redthreadgame.Enums.InvitationStatusType.ACCEPTED;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +26,7 @@ public class GameSessionService {
     private final PlayerRepository playerRepository;
     private final InvitationRepository invitationRepository;
     private final SessionPlayerRepository sessionPlayerRepository;
+    private final EmailService emailService;
 
 
     //BASIC CRUD
@@ -47,11 +45,15 @@ public class GameSessionService {
 
         GameSession gameSession = modelMapper.map(gameSessionIn, GameSession.class);
         gameSession.setSessionCode(code);
-        gameSession.setSessionCase(sessionCase);
+        gameSession.setSessionCase(gameSession.getIsPrivate() ? sessionCase : null);
         gameSession.setOwner(player);
         gameSession.setStatus(PENDING);
 
         gameSessionRepository.save(gameSession);
+
+        // add owner as session player
+        SessionPlayer sessionPlayer = new SessionPlayer(null, SessionPlayerRole.HOST, SessionPlayerStatus.JOINED, LocalDateTime.now(), gameSession, player);
+        sessionPlayerRepository.save(sessionPlayer);
     }
 
     public void updateGameSession(Integer id, GameSessionIn gameSessionIn){
@@ -97,17 +99,7 @@ public class GameSessionService {
         if (gameSession.getIsPrivate())
             throw new ApiException("This session is private");
 
-        // check session status
-        if (gameSession.getStatus() != PENDING)
-            throw new ApiException("Session is not available to join");
-
-        // check if already joined
-        if (sessionPlayerRepository.existsByGameSessionAndPlayer(gameSession, player))
-            throw new ApiException("You already joined this session");
-
-        // check players count
-        if (sessionPlayerRepository.countByGameSession(gameSession) >= gameSession.getPlayersCount())
-            throw new ApiException("Game session is full");
+        validateJoin(player, gameSession);
 
         joinMember(player, gameSession);
     }
@@ -121,30 +113,39 @@ public class GameSessionService {
         if (gameSession == null)
             throw new ApiException("Invalid session code");
 
-        // check session status
-        if (gameSession.getStatus() == IN_PROGRESS)
-            throw new ApiException("You can't enter, session is already in progress");
-
         // check invitation
         Invitation invitation = invitationRepository.findByGameSessionIdAndPlayerId(gameSession.getId(), playerId);
         if (invitation == null)
             throw new ApiException("You are not invited to this game session");
 
-        // check if already joined
-        if (sessionPlayerRepository.existsByGameSessionAndPlayer(gameSession, player))
-            throw new ApiException("You already joined this session");
+        validateJoin(player, gameSession);
 
-        // check invitation status
-        if (invitation.getStatus() != ACCEPTED)
-            throw new ApiException("You have not accepted the invitation yet");
-
-        // check players count
-        if (sessionPlayerRepository.countByGameSession(gameSession) >= gameSession.getPlayersCount())
-            throw new ApiException("Game session is full");
-
-        //join
+        // join
         joinMember(player, gameSession);
 
+    }
+
+    public void leaveSession(Integer gameSessionId, Integer playerId){
+        Player player = checkPlayer(playerId);
+        GameSession gameSession = checkGameSession(gameSessionId);
+
+        // check session status
+        if(gameSession.getStatus() != PENDING)
+            throw new ApiException("You can only leave a session that is pending");
+
+        // check if player is in session
+        SessionPlayer sessionPlayer = sessionPlayerRepository.findByGameSessionAndPlayer(gameSession, player);
+        if(sessionPlayer == null)
+            throw new ApiException("You are not in this session");
+
+        // check if player is owner
+        if(gameSession.getOwner().getId().equals(playerId))
+            throw new ApiException("Owner cannot leave the session");
+
+        sessionPlayer.setStatus(SessionPlayerStatus.LEFT);
+        sessionPlayerRepository.save(sessionPlayer);
+
+        notifyOwnerPlayerLeft(player, gameSession);
     }
 
     public void startSession(Integer gameSessionId, Integer playerId) {
@@ -162,8 +163,9 @@ public class GameSessionService {
         gameSession.setStartedAt(LocalDateTime.now());
 
         gameSessionRepository.save(gameSession);
-    }
 
+        notifyPlayersSessionStarted(gameSession);
+    }
 
 
     //HELPER METHODS
@@ -197,13 +199,79 @@ public class GameSessionService {
     }
 
     private void joinMember(Player player, GameSession gameSession){
-        SessionPlayer sessionPlayer = new SessionPlayer();
-        sessionPlayer.setGameSession(gameSession);
-        sessionPlayer.setPlayer(player);
-        sessionPlayer.setRole(SessionPlayerRole.MEMBER);
-        sessionPlayer.setStatus(SessionPlayerStatus.JOINED);
-        sessionPlayer.setJoinedAt(LocalDateTime.now());
+        SessionPlayer sessionPlayer = new SessionPlayer(null, SessionPlayerRole.MEMBER, SessionPlayerStatus.JOINED, LocalDateTime.now(), gameSession, player);
 
         sessionPlayerRepository.save(sessionPlayer);
+        checkAutoStart(gameSession);
+    }
+
+    private void notifyPlayersSessionStarted(GameSession gameSession){
+        List<SessionPlayer> sessionPlayers = sessionPlayerRepository.findAllByGameSessionId(gameSession.getId());
+        for(SessionPlayer sp : sessionPlayers){
+            emailService.send(
+                    sp.getPlayer().getEmail(),
+                    "Game Session #" + gameSession.getId() + " Has Started!",
+                    "Dear " + sp.getPlayer().getName() + ",\n\n" +
+                            "Game session #" + gameSession.getId() + " has started!\n\n" +
+                            "Session Details:\n" +
+                            "- Session Code: " + gameSession.getSessionCode() + "\n" +
+                            "- Players Count: " + gameSession.getPlayersCount() + "\n" +
+                            "- Started At: " + gameSession.getStartedAt() + "\n\n" +
+                            "Best regards,\n" +
+                            "Red Thread Game System"
+            );
+        }
+    }
+
+    private void notifyOwnerPlayerLeft(Player player, GameSession gameSession){
+        emailService.send(
+                gameSession.getOwner().getEmail(),
+                "Player Left - Game Session #" + gameSession.getId(),
+                "Dear " + gameSession.getOwner().getName() + ",\n\n" +
+                        "Player " + player.getName() + " has left your game session #" + gameSession.getId() + ".\n\n" +
+                        "Player Details:\n" +
+                        "- Name: " + player.getName() + "\n" +
+                        "- Username: " + player.getUsername() + "\n" +
+                        "- Email: " + player.getEmail() + "\n\n" +
+                        "Best regards,\n" +
+                        "Red Thread Game System"
+        );
+    }
+
+    private void checkAutoStart(GameSession gameSession){
+        int currentPlayers = sessionPlayerRepository.countByGameSessionAndStatus(gameSession, SessionPlayerStatus.JOINED);
+        if(currentPlayers >= gameSession.getPlayersCount()){
+            new Timer().schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    gameSession.setStatus(IN_PROGRESS);
+                    gameSession.setStartedAt(LocalDateTime.now());
+                    gameSessionRepository.save(gameSession);
+                    notifyPlayersSessionStarted(gameSession);
+                }
+            }, 10000);
+        }
+    }
+
+    private void validateJoin(Player player, GameSession gameSession){
+        // check if player is already in a pending or in progress session
+        if(sessionPlayerRepository.existsByPlayerIdAndGameSession_StatusIn(player.getId(), List.of(PENDING, IN_PROGRESS)))
+            throw new ApiException("You are already in an active session");
+
+        // check session status
+        if(gameSession.getStatus() != PENDING)
+            throw new ApiException("Session is not available to join");
+
+        // check if already joined
+        if(sessionPlayerRepository.existsByGameSessionAndPlayer(gameSession, player))
+            throw new ApiException("You already joined this session");
+
+        // check players count
+        if(sessionPlayerRepository.countByGameSessionAndStatus(gameSession, SessionPlayerStatus.JOINED) >= gameSession.getPlayersCount())
+            throw new ApiException("Game session is full");
+
+        // check if player already played this case
+        if(sessionPlayerRepository.existsByPlayerIdAndGameSession_SessionCase_Id(player.getId(), gameSession.getSessionCase().getId()))
+            throw new ApiException("You already played this case before");
     }
 }

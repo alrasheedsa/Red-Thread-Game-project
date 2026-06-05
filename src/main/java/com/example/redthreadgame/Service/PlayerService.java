@@ -48,7 +48,7 @@ public class PlayerService {
         oldPlayer.setName(playerIn.getName());
         oldPlayer.setUsername(playerIn.getUsername());
         oldPlayer.setEmail(playerIn.getEmail());
-        oldPlayer.setPhoneNumber(oldPlayer.getPhoneNumber());
+        oldPlayer.setPhoneNumber(playerIn.getPhoneNumber());
         oldPlayer.setPassword(playerIn.getPassword());
         oldPlayer.setAge(playerIn.getAge());
 

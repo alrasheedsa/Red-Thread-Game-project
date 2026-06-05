@@ -12,7 +12,6 @@ import com.example.redthreadgame.Repository.InvitationRepository;
 import com.example.redthreadgame.Repository.PlayerRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
-import static com.example.redthreadgame.Enums.GameSessionStatusType.*;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -29,6 +28,7 @@ public class InvitationService {
     private final GameSessionRepository gameSessionRepository;
     private final PlayerRepository playerRepository;
     private final WhatsAppService whatsAppService;
+    private final EmailService emailService;
 
 
     //BASIC CRUD
@@ -43,6 +43,7 @@ public class InvitationService {
     public void addInvitation(Integer ownerId, Integer gameSessionId, Integer playerId){
         GameSession gameSession = checkGameSession(gameSessionId);
         checkPlayer(ownerId);
+        Player player = checkPlayer(playerId);
 
         // check owner
         if(!gameSession.getOwner().getId().equals(ownerId))
@@ -52,10 +53,20 @@ public class InvitationService {
         if (gameSession.getStatus() != GameSessionStatusType.PENDING)
             throw new ApiException("Cannot invite players to a session that is not pending");
 
-        Player player = checkPlayer(playerId);
+        // check if player is already invited
+        if(invitationRepository.existsByGameSessionAndPlayer(gameSession, player))
+            throw new ApiException("Player is already invited");
+
+        // check if player is the owner
+        if(playerId.equals(ownerId))
+            throw new ApiException("You cannot invite yourself");
+
         Invitation invitation = new Invitation(null, InvitationStatusType.PENDING, gameSession, player);
 
         invitationRepository.save(invitation);
+
+        //send code to the player
+        whatsAppService.sendSessionCode(player.getPhoneNumber(), gameSession.getSessionCode());
     }
 
     public void deleteInvitation(Integer id){
@@ -65,36 +76,9 @@ public class InvitationService {
 
 
     //EXTRA ENDPOINTS
-    public void acceptInvitation(Integer gameSessionId, Integer playerId){
-        //check player and game session
-        Player player = checkPlayer(playerId);
-        GameSession gameSession = gameSessionRepository.findGameSessionById(gameSessionId);
-
-        //get player invitation
-        Invitation invitation = invitationRepository.findByGameSessionIdAndPlayerId(gameSessionId, playerId);
-
-        //check if he is invited or not
-        if(invitation == null)
-            throw new ApiException("You are not invited to this game session");
-
-        //check status
-        if(invitation.getStatus() == ACCEPTED)
-            throw new ApiException("You accepted this invite already");
-
-        //accept invitation
-        invitation.setStatus(ACCEPTED);
-        invitationRepository.save(invitation);
-
-        System.out.println("phoneNumber: " + player.getPhoneNumber());
-        System.out.println("sessionCode: " + gameSession.getSessionCode());
-
-        //send code to the player
-        whatsAppService.sendSessionCode(player.getPhoneNumber(), gameSession.getSessionCode());
-    }
-
     public void rejectInvitation(Integer gameSessionId, Integer playerId){
         //check player
-        checkPlayer(playerId);
+        Player player = checkPlayer(playerId);
 
         //get player invitation
         Invitation invitation = invitationRepository.findByGameSessionIdAndPlayerId(gameSessionId, playerId);
@@ -105,11 +89,14 @@ public class InvitationService {
 
         //check status
         if(invitation.getStatus() == REJECTED)
-            throw new ApiException("You rejected this invite already");
+            throw new ApiException("You rejected this invitation already");
 
         //reject invitation
         invitation.setStatus(REJECTED);
         invitationRepository.save(invitation);
+
+        //send email to the owner
+        notifyOwnerRejection(player, gameSessionId);
     }
 
 
@@ -133,6 +120,22 @@ public class InvitationService {
         if(player == null) throw new ApiException("Player not found"); //check player
 
         return player;
+    }
+
+    private void notifyOwnerRejection(Player player, Integer gameSessionId){
+        GameSession gameSession = checkGameSession(gameSessionId);
+        emailService.send(
+                gameSession.getOwner().getEmail(),
+                "Invitation Rejected - Game Session #" + gameSessionId,
+                "Dear " + gameSession.getOwner().getName() + ",\n\n" +
+                        "Player " + player.getName() + " has rejected your invitation for game session #" + gameSessionId + ".\n\n" +
+                        "Player Details:\n" +
+                        "- Name: " + player.getName() + "\n" +
+                        "- Username: " + player.getUsername() + "\n" +
+                        "- Email: " + player.getEmail() + "\n\n" +
+                        "Best regards,\n" +
+                        "Red Thread Game System"
+        );
     }
 
 
