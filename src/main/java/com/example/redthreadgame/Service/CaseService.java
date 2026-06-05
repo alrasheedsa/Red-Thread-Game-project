@@ -33,7 +33,7 @@ public class CaseService {
     }
     public void updateCase(Integer adminId, String password, Integer caseId, CaseIn dto) {
         adminService.verifyAdmin(adminId, password);
-        Case old = checkCase(adminId);
+        Case old = checkCase(caseId);
         old.setTitle(dto.getTitle());
         old.setScenario(dto.getScenario());
         old.setDifficulty(dto.getDifficulty());

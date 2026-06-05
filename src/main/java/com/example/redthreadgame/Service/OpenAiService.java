@@ -21,7 +21,6 @@ public class OpenAiService {
     private final EvidenceRepository evidenceRepository;
     private final CaseSolutionRepository caseSolutionRepository;
     private final AdminService adminService;
-    private final CaseService caseService;
     private final GameSessionRepository gameSessionRepository;
 
 
@@ -128,12 +127,7 @@ public class OpenAiService {
 
 //generate answer
     public String generateAnswer(String prompt) {
-        String response = WebClient.builder()
-                .baseUrl("https://api.openai.com")
-                .build()
-                .post()
-                .uri("/v1/chat/completions")
-                .header("Authorization", "Bearer " + openAiApiKey)
+        String response = WebClient.builder().baseUrl("https://api.openai.com").build().post().uri("/v1/chat/completions").header("Authorization", "Bearer " + openAiApiKey)
                 .header("Content-Type", "application/json")
                 .bodyValue("""
                         {
@@ -188,8 +182,7 @@ public class OpenAiService {
                           "messages": [{"role": "user", "content": "%s"}],
                           "temperature": 0.0
                         }
-                        """.formatted(prompt.replace("\"", "\\\"").replace("\n", "\\n")))
-                .retrieve().bodyToMono(String.class).block();
+                        """.formatted(prompt.replace("\"", "\\\"").replace("\n", "\\n"))).retrieve().bodyToMono(String.class).block();
 
         try {
             JsonNode root = objectMapper.readTree(response);
@@ -199,38 +192,6 @@ public class OpenAiService {
         }
     }
 
-    //evaluation solution
-    public boolean evaluateSolution(String playerReason, String correctJustification) {
-        String prompt = """
-                You are a mystery game judge.
-                
-                Correct solution: %s
-                
-                Player's answer: %s
-                
-                Does the player's answer correctly identify the culprit and the motive?
-                Reply with ONLY "true" or "false".
-                """.formatted(correctJustification, playerReason);
-
-        String response = WebClient.builder()
-                .baseUrl("https://api.openai.com").build().post().uri("/v1/chat/completions").header("Authorization", "Bearer " + openAiApiKey).header("Content-Type", "application/json")
-                .bodyValue("""
-                        {
-                          "model": "gpt-4o-mini",
-                          "messages": [{"role": "user", "content": "%s"}],
-                          "temperature": 0.0
-                        }
-                        """.formatted(prompt.replace("\"", "\\\"").replace("\n", "\\n")))
-                .retrieve().bodyToMono(String.class).block();
-
-        try {
-            JsonNode root = objectMapper.readTree(response);
-            String result = root.path("choices").get(0).path("message").path("content").asText().trim().toLowerCase();
-            return result.equals("true");
-        } catch (Exception e) {
-            throw new ApiException("Failed to evaluate solution: " + e.getMessage());
-        }
-    }
     //calculate score
     public Integer calculateScore(Integer questionCount, Integer hintCount) {
         int baseScore = 100;

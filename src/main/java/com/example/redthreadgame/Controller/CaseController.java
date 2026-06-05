@@ -26,7 +26,7 @@ public class CaseController {
     //get just published cases
     @GetMapping("/published")
     public ResponseEntity<?> getPublishedCases() {
-        return ResponseEntity.status(200).body(caseService.getAllCases());
+        return ResponseEntity.status(200).body(caseService.getPublishedCases()); // ← صلحيها
     }
 
     @PutMapping("/update/{adminId}/{caseId}") public ResponseEntity<?> updateCase(@PathVariable Integer adminId, @PathVariable Integer caseId, @RequestBody @Valid CaseIn dto) {
