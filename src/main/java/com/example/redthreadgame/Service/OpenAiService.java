@@ -191,6 +191,38 @@ public class OpenAiService {
             throw new ApiException("Failed to evaluate solution: " + e.getMessage());
         }
     }
+    //evaluation solution
+    public boolean evaluateSolution(String playerReason, String correctJustification) {
+        String prompt = """
+                You are a mystery game judge.
+                
+                Correct solution: %s
+                
+                Player's answer: %s
+                
+                Does the player's answer correctly identify the culprit and the motive?
+                Reply with ONLY "true" or "false".
+                """.formatted(correctJustification, playerReason);
+
+        String response = WebClient.builder()
+                .baseUrl("https://api.openai.com").build().post().uri("/v1/chat/completions").header("Authorization", "Bearer " + openAiApiKey).header("Content-Type", "application/json")
+                .bodyValue("""
+                        {
+                          "model": "gpt-4o-mini",
+                          "messages": [{"role": "user", "content": "%s"}],
+                          "temperature": 0.0
+                        }
+                        """.formatted(prompt.replace("\"", "\\\"").replace("\n", "\\n")))
+                .retrieve().bodyToMono(String.class).block();
+
+        try {
+            JsonNode root = objectMapper.readTree(response);
+            String result = root.path("choices").get(0).path("message").path("content").asText().trim().toLowerCase();
+            return result.equals("true");
+        } catch (Exception e) {
+            throw new ApiException("Failed to evaluate solution: " + e.getMessage());
+        }
+    }
 
     //calculate score
     public Integer calculateScore(Integer questionCount, Integer hintCount) {
