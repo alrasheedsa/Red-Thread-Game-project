@@ -5,8 +5,6 @@ import com.twilio.type.PhoneNumber;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
 @Service
 public class WhatsAppService {
 
@@ -19,25 +17,16 @@ public class WhatsAppService {
     @Value("${twilio.whatsapp.number}")
     private String fromNumber;
 
-//    public void sendAllergenWarning() {
-//        Twilio.init(accountSid, authToken);
-//
-//        String message = "";
-//
-//        Message.creator(
-//                new PhoneNumber("whatsapp:" + bbbb),
-//                new PhoneNumber(fromNumber),
-//                message
-//        ).create();
-//    }
-
     public void sendSessionCode(String phoneNumber, String sessionCode) {
         Twilio.init(accountSid, authToken);
+
         Message.creator(
                 new PhoneNumber("whatsapp:" + phoneNumber),
                 new PhoneNumber("whatsapp:" + fromNumber),
-                "Your game session code is: " + sessionCode
+                "🕵️ Welcome to Red Thread!\n\n" +
+                        "🔑 Your Session Code: " + sessionCode + "\n\n" +
+                        "Enter the code and start investigating. 🔍\n\n" +
+                        "Good luck, Detective! 🧩"
         ).create();
     }
-
 }

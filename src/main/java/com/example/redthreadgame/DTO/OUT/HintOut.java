@@ -10,4 +10,6 @@ import lombok.NoArgsConstructor;
 public class HintOut {
     private Integer id;
     private String content;
+    private Integer deductedPoints;
+    private PlayerOut player;
 }

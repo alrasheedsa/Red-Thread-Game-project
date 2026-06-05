@@ -3,8 +3,6 @@ package com.example.redthreadgame.Service;
 import com.example.redthreadgame.Api.ApiException;
 import com.example.redthreadgame.DTO.OUT.SessionPlayerOut;
 import com.example.redthreadgame.Model.SessionPlayer;
-import com.example.redthreadgame.Repository.GameSessionRepository;
-import com.example.redthreadgame.Repository.PlayerRepository;
 import com.example.redthreadgame.Repository.SessionPlayerRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
