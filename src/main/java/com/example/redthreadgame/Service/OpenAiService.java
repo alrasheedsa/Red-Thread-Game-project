@@ -7,16 +7,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -28,46 +21,50 @@ public class OpenAiService {
     private final EvidenceRepository evidenceRepository;
     private final CaseSolutionRepository caseSolutionRepository;
     private final AdminService adminService;
-    private final CaseService caseService;
+    private final GameSessionRepository gameSessionRepository;
+
 
     @Value("${openai.api.key}")
     private String openAiApiKey;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-
-    // ─── GENERATE CASE ────────────────────────────────────────────────────────
-
+    //generate case
     public void generateCase(Integer adminId, String password) {
         adminService.verifyAdmin(adminId, password);
         String prompt = """
-Generate a creative mystery case. The case type can be murder, theft, kidnapping, fraud, or any other interesting crime that fits a detective game.
-Choose the case type naturally. Choose suspect ages and witness reliability scores naturally based on their role in the case. Use this exact JSON structure:
-        {
-          "title": "case title",
-          "scenario": "detailed case scenario 3-5 sentences",
-          "difficulty": "EASY or MEDIUM or HARD",
-        "witnesses": [
-       {"name": "witness name", "statement": "witness statement", "reliabilityScore": score between 1 and 100 based on witness credibility},
-       {"name": "witness name", "statement": "witness statement", "reliabilityScore": score between 1 and 100 based on witness credibility},
-       {"name": "witness name", "statement": "witness statement", "reliabilityScore": score between 1 and 100 based on witness credibility}
-       ],,
-          "suspects": [
-            {"name": "suspect name", "age": choose_naturally},
-            {"name": "suspect name", "age": choose_naturally},
-            {"name": "suspect name", "age": choose_naturally},
-            {"name": "child suspect", "age": choose_between_8_and_14}
-          ],
-          "evidences": [
-            {"title": "evidence title", "description": "evidence description"},
-            {"title": "evidence title", "description": "evidence description"}
-          ],
-          "caseSolution": {
-            "justification": "full explanation of who did it and why"
-          }
-        }
-        Return ONLY the JSON, no extra text.
-        """;
+                Generate a creative mystery case in English only. The case type can be murder, theft, kidnapping, fraud, or any other interesting crime that fits a detective game.
+                Choose the case type naturally. Choose suspect ages and witness reliability scores naturally based on their role in the case.
+                For every witness and suspect, choose gender and voiceTone.
+                gender must be only: MALE or FEMALE.
+                voiceTone must be only one of: CALM, NERVOUS, DEFENSIVE, SUSPICIOUS, SAD, CONFIDENT.
+                Choose the tone based on the character role in the mystery.
+                Use this exact JSON structure:
+                        {
+                          "title": "case title",
+                          "scenario": "detailed case scenario 3-5 sentences",
+                          "difficulty": "EASY or MEDIUM or HARD",
+                        "witnesses": [
+                       {"name": "witness name", "statement": "witness statement", "reliabilityScore": score between 1 and 100 based on witness credibility, "gender": "MALE or FEMALE", "voiceTone": "CALM or NERVOUS or DEFENSIVE or SUSPICIOUS or SAD or CONFIDENT"},
+                       {"name": "witness name", "statement": "witness statement", "reliabilityScore": score between 1 and 100 based on witness credibility, "gender": "MALE or FEMALE", "voiceTone": "CALM or NERVOUS or DEFENSIVE or SUSPICIOUS or SAD or CONFIDENT"},
+                       {"name": "witness name", "statement": "witness statement", "reliabilityScore": score between 1 and 100 based on witness credibility, "gender": "MALE or FEMALE", "voiceTone": "CALM or NERVOUS or DEFENSIVE or SUSPICIOUS or SAD or CONFIDENT"}
+                       ],
+                          "suspects": [
+                            {"name": "suspect name", "age": choose_naturally, "gender": "MALE or FEMALE", "voiceTone": "CALM or NERVOUS or DEFENSIVE or SUSPICIOUS or SAD or CONFIDENT"},
+                            {"name": "suspect name", "age": choose_naturally, "gender": "MALE or FEMALE", "voiceTone": "CALM or NERVOUS or DEFENSIVE or SUSPICIOUS or SAD or CONFIDENT"},
+                            {"name": "suspect name", "age": choose_naturally, "gender": "MALE or FEMALE", "voiceTone": "CALM or NERVOUS or DEFENSIVE or SUSPICIOUS or SAD or CONFIDENT"},
+                            {"name": "child suspect", "age": choose_between_8_and_14, "gender": "MALE or FEMALE", "voiceTone": "CALM or NERVOUS or DEFENSIVE or SUSPICIOUS or SAD or CONFIDENT"}
+                          ],
+                          "evidences": [
+                            {"title": "evidence title", "description": "evidence description"},
+                            {"title": "evidence title", "description": "evidence description"}
+                          ],
+                          "caseSolution": {
+                            "justification": "full explanation of who did it and why"
+                          }
+                        }
+                        Return ONLY the JSON, no extra text.
+                """;
 
         String response = WebClient.builder()
                 .baseUrl("https://api.openai.com")
@@ -82,15 +79,12 @@ Choose the case type naturally. Choose suspect ages and witness reliability scor
                           "messages": [{"role": "user", "content": "%s"}],
                           "temperature": 0.8
                         }
-                        """.formatted(prompt.replace("\"", "\\\"").replace("\n", "\\n")))
-                .retrieve()
-                .bodyToMono(String.class)
-                .block();
+                        """.formatted(prompt.replace("\"", "\\\"").replace("\n", "\\n"))).retrieve()
+                .bodyToMono(String.class).block();
 
         try {
             JsonNode root = objectMapper.readTree(response);
             String content = root.path("choices").get(0).path("message").path("content").asText();
-
             content = content.replace("```json", "").replace("```", "").trim();
             JsonNode caseJson = objectMapper.readTree(content);
 
@@ -106,6 +100,8 @@ Choose the case type naturally. Choose suspect ages and witness reliability scor
                 witness.setName(w.path("name").asText());
                 witness.setStatement(w.path("statement").asText());
                 witness.setReliabilityScore(w.path("reliabilityScore").asDouble());
+                witness.setGender(normalizeGender(w.path("gender").asText()));
+                witness.setVoiceTone(normalizeVoiceTone(w.path("voiceTone").asText(), "CALM"));
                 witness.setWitnessCase(newCase);
                 witnessRepository.save(witness);
             }
@@ -114,6 +110,8 @@ Choose the case type naturally. Choose suspect ages and witness reliability scor
                 Suspect suspect = new Suspect();
                 suspect.setName(s.path("name").asText());
                 suspect.setAge(s.path("age").asInt());
+                suspect.setGender(normalizeGender(s.path("gender").asText()));
+                suspect.setVoiceTone(normalizeVoiceTone(s.path("voiceTone").asText(), "DEFENSIVE"));
                 suspect.setSuspectCase(newCase);
                 suspectRepository.save(suspect);
             }
@@ -125,8 +123,6 @@ Choose the case type naturally. Choose suspect ages and witness reliability scor
                 evidence.setEvidenceCase(newCase);
                 evidenceRepository.save(evidence);
             }
-
-            //سلوشن مايطلع للبلايرز
             CaseSolution solution = new CaseSolution();
             solution.setJustification(caseJson.path("caseSolution").path("justification").asText());
             solution.setSolutionCase(newCase);
@@ -137,26 +133,10 @@ Choose the case type naturally. Choose suspect ages and witness reliability scor
         }
     }
 
-    public void generateAndPublishCase(Integer adminId, String password) {
-        generateCase(adminId, password);
-        Case lastCase = caseRepository.findFirstByOrderByIdDesc();
-        if (lastCase == null) throw new ApiException("Case not found");
-        lastCase.setStatus("PUBLISHED");
 
-        caseRepository.save(lastCase);
-
-    }
-
-
-
-    // ─── GENERATE ANSWER ──────────────────────────────────────────────────────
+//generate answer
     public String generateAnswer(String prompt) {
-        String response = WebClient.builder()
-                .baseUrl("https://api.openai.com")
-                .build()
-                .post()
-                .uri("/v1/chat/completions")
-                .header("Authorization", "Bearer " + openAiApiKey)
+        String response = WebClient.builder().baseUrl("https://api.openai.com").build().post().uri("/v1/chat/completions").header("Authorization", "Bearer " + openAiApiKey)
                 .header("Content-Type", "application/json")
                 .bodyValue("""
                         {
@@ -164,10 +144,7 @@ Choose the case type naturally. Choose suspect ages and witness reliability scor
                           "messages": [{"role": "user", "content": "%s"}],
                           "temperature": 0.7
                         }
-                        """.formatted(prompt.replace("\"", "\\\"").replace("\n", "\\n")))
-                .retrieve()
-                .bodyToMono(String.class)
-                .block();
+                        """.formatted(prompt.replace("\"", "\\\"").replace("\n", "\\n"))).retrieve().bodyToMono(String.class).block();
 
         try {
             JsonNode root = objectMapper.readTree(response);
@@ -177,20 +154,76 @@ Choose the case type naturally. Choose suspect ages and witness reliability scor
         }
     }
 
+//check correct suspect
+    public String checkCorrectSuspect(Integer gameSessionId, Integer suspectId, String playerReason) {
+        GameSession gameSession = gameSessionRepository.findGameSessionById(gameSessionId);
+        if (gameSession == null)
+            throw new ApiException("Game session not found");
 
-    // ─── EVALUATE SOLUTION ────────────────────────────────────────────────────
+        CaseSolution caseSolution = gameSession.getSessionCase().getCaseSolution();
+        if (caseSolution == null)
+            throw new ApiException("Case solution not found");
 
-    public boolean evaluateSolution(String playerReason, String correctJustification) {
+        Suspect suspect = suspectRepository.findSuspectById(suspectId);
+        if (suspect == null)
+            throw new ApiException("Suspect not found");
+
+        if (!suspect.getSuspectCase().getId().equals(gameSession.getSessionCase().getId()))
+            throw new ApiException("Suspect does not belong to this case");
+
         String prompt = """
-                You are a murder mystery judge.
+                You are a mystery game judge.
                 
                 Correct solution: %s
                 
-                Player's answer: %s
+                Player accused: %s
+                Player reason: %s
                 
-                Does the player's answer correctly identify the culprit and the motive?
+                Does the player correctly identify the culprit and provide a reasonable explanation?
+                Reply with ONLY one of these two:
+                "You won! Great detective work!"
+                "You lost! Better luck next time!"
+                """.formatted(caseSolution.getJustification(), suspect.getName(), playerReason);
+
+        String response = WebClient.builder().baseUrl("https://api.openai.com").build().post().uri("/v1/chat/completions").header("Authorization", "Bearer " + openAiApiKey).header("Content-Type", "application/json").bodyValue("""
+                        {
+                          "model": "gpt-4o-mini",
+                          "messages": [{"role": "user", "content": "%s"}],
+                          "temperature": 0.0
+                        }
+                        """.formatted(prompt.replace("\"", "\\\"").replace("\n", "\\n"))).retrieve().bodyToMono(String.class).block();
+
+        try {
+            JsonNode root = objectMapper.readTree(response);
+            return root.path("choices").get(0).path("message").path("content").asText().trim().replace("\"", "");
+        } catch (Exception e) {
+            throw new ApiException("Failed to evaluate solution: " + e.getMessage());
+        }
+    }
+    //evaluation solution
+    public boolean evaluateSolution(String playerReason, String accusedSuspectName, Integer accusedSuspectAge, String correctJustification) {
+        String prompt = """
+                You are a mystery game judge.
+                
+                Correct solution justification:
+                %s
+                
+                Player accused suspect:
+                Name: %s
+                Age: %s
+                
+                Player reason:
+                %s
+                
+                The correct suspect is not stored in a separate database field.
+                Extract the correct suspect from the correct solution justification.
+                
+                Return true only if:
+                - The accused suspect matches the culprit in the correct solution justification.
+                - The player's reason reasonably matches the correct motive and evidence.
+                
                 Reply with ONLY "true" or "false".
-                """.formatted(correctJustification, playerReason);
+                """.formatted(correctJustification, accusedSuspectName, accusedSuspectAge, playerReason);
 
         String response = WebClient.builder()
                 .baseUrl("https://api.openai.com").build().post().uri("/v1/chat/completions").header("Authorization", "Bearer " + openAiApiKey).header("Content-Type", "application/json")
@@ -201,9 +234,7 @@ Choose the case type naturally. Choose suspect ages and witness reliability scor
                           "temperature": 0.0
                         }
                         """.formatted(prompt.replace("\"", "\\\"").replace("\n", "\\n")))
-                .retrieve()
-                .bodyToMono(String.class)
-                .block();
+                .retrieve().bodyToMono(String.class).block();
 
         try {
             JsonNode root = objectMapper.readTree(response);
@@ -215,5 +246,29 @@ Choose the case type naturally. Choose suspect ages and witness reliability scor
     }
 
     //calculate score
+    public Integer calculateScore(Integer questionCount, Integer hintCount) {
+        int baseScore = 100;
+        int questionPenalty = questionCount * 5;
+        int hintPenalty = hintCount * 10;
+        int finalScore = baseScore - questionPenalty - hintPenalty;
+        return Math.max(1, finalScore);
+    }
 
+    private String normalizeGender(String gender) {
+        if ("FEMALE".equalsIgnoreCase(gender))
+            return "FEMALE";
+        return "MALE";
+    }
+
+    private String normalizeVoiceTone(String voiceTone, String defaultTone) {
+        if (voiceTone == null)
+            return defaultTone;
+
+        String tone = voiceTone.toUpperCase();
+        if (tone.equals("CALM") || tone.equals("NERVOUS") || tone.equals("DEFENSIVE") ||
+                tone.equals("SUSPICIOUS") || tone.equals("SAD") || tone.equals("CONFIDENT"))
+            return tone;
+
+        return defaultTone;
+    }
     }

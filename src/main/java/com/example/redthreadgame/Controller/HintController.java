@@ -27,8 +27,7 @@ public class HintController {
 
     @PostMapping("/request/{gameSessionId}/{playerId}")
     public ResponseEntity<?> requestHint(@PathVariable Integer gameSessionId, @PathVariable Integer playerId) {
-        hintService.requestHint(gameSessionId, playerId);
-        return ResponseEntity.status(200).body(new ApiResponse("Hint requested successfully"));
+        return ResponseEntity.status(200).body(hintService.requestHint(gameSessionId, playerId));
     }
 
     @GetMapping("/player/{playerId}")
@@ -41,6 +40,11 @@ public class HintController {
     public ResponseEntity<?> calculateHintPenalty(@PathVariable Integer gameSessionId) {
         Integer penalty = hintService.calculateHintPenalty(gameSessionId);
         return ResponseEntity.status(200).body(penalty);
+    }
+
+    @GetMapping("/total-score/{gameSessionId}")
+    public ResponseEntity<?> calculateTotalScore(@PathVariable Integer gameSessionId) {
+        return ResponseEntity.status(200).body(hintService.calculateTotalScore(gameSessionId));
     }
 
     @DeleteMapping("/delete/{hintId}")

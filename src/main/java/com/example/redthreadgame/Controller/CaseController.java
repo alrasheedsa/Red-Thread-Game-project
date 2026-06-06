@@ -18,64 +18,44 @@ public class CaseController {
     private final CaseService caseService;
     private final OpenAiService openAiService;
 
-
-
-
     @GetMapping("/get")
     public ResponseEntity<?> getAllCases() {
         return ResponseEntity.ok(caseService.getAllCases());
     }
 
+    //get just published cases
     @GetMapping("/published")
     public ResponseEntity<?> getPublishedCases() {
-        return ResponseEntity.ok(caseService.getPublishedCases());
+        return ResponseEntity.status(200).body(caseService.getPublishedCases()); // ← صلحيها
     }
 
-    @PutMapping("/update/{id}")
-    public ResponseEntity<?> updateCase(@PathVariable Integer id, @RequestBody @Valid CaseIn dto) {
-        caseService.updateCase(id, dto);
-        return ResponseEntity.ok(new ApiResponse("Case updated successfully"));
+    @PutMapping("/update/{adminId}/{caseId}") public ResponseEntity<?> updateCase(@PathVariable Integer adminId, @PathVariable Integer caseId, @RequestBody @Valid CaseIn dto) {
+        caseService.updateCase(adminId, dto.getPassword(), caseId, dto);
+        return ResponseEntity.status(200).body(new ApiResponse("Case updated successfully"));
     }
 
     @DeleteMapping("/delete/{adminId}/{caseId}")
-    public ResponseEntity<?> deleteCase(@PathVariable Integer adminId,
-                                        @PathVariable Integer caseId,
-                                        @RequestBody @Valid AdminVerifyIn dto) {
+    public ResponseEntity<?> deleteCase(@PathVariable Integer adminId, @PathVariable Integer caseId, @RequestBody @Valid AdminVerifyIn dto) {
         caseService.deleteCase(adminId, dto.getPassword(), caseId);
-        return ResponseEntity.ok(new ApiResponse("Case deleted successfully"));
+        return ResponseEntity.status(200).body(new ApiResponse("Case deleted successfully"));
     }
-
-
     //for admin endpoints
-
-    @PatchMapping("/publish/{adminId}/{caseId}")
-    public ResponseEntity<?> publishCase(@PathVariable Integer adminId,
-                                         @PathVariable Integer caseId,@RequestBody @Valid AdminVerifyIn dto) {
+    @PutMapping("/publish/{adminId}/{caseId}")
+    public ResponseEntity<?> publishCase(@PathVariable Integer adminId, @PathVariable Integer caseId,@RequestBody @Valid AdminVerifyIn dto) {
         caseService.publishCase(adminId, dto.getPassword(), caseId);
-        return ResponseEntity.ok(new ApiResponse("Case published successfully"));
+        return ResponseEntity.status(200).body(new ApiResponse("Case published successfully"));
     }
 
-    @PatchMapping("/draft/{adminId}/{caseId}")
-    public ResponseEntity<?> moveCaseToDraft(@PathVariable Integer adminId, @PathVariable Integer caseId,
-                                             @RequestBody @Valid AdminVerifyIn dto) {
+    @PutMapping("/draft/{adminId}/{caseId}")
+    public ResponseEntity<?> moveCaseToDraft(@PathVariable Integer adminId, @PathVariable Integer caseId, @RequestBody @Valid AdminVerifyIn dto) {
         caseService.moveCaseToDraft(adminId, dto.getPassword(), caseId);
-        return ResponseEntity.ok(new ApiResponse("Case moved back to DRAFT successfully"));
+        return ResponseEntity.status(200).body(new ApiResponse("Case moved back to DRAFT successfully"));
     }
-
 
     //AI endpoint
-
-
     @PostMapping("/generate/{adminId}")
-    public ResponseEntity<?> generateCase(@PathVariable Integer adminId,
-                                          @RequestBody @Valid AdminVerifyIn dto) {
+    public ResponseEntity<?> generateCase(@PathVariable Integer adminId, @RequestBody @Valid AdminVerifyIn dto) {
         openAiService.generateCase(adminId, dto.getPassword());
-        return ResponseEntity.status(201).body(new ApiResponse("Case generated successfully as DRAFT"));
-    }
-    @PostMapping("/generate-and-publish/{adminId}")
-    public ResponseEntity<?> generateAndPublishCase(@PathVariable Integer adminId,
-                                                    @RequestBody @Valid AdminVerifyIn dto) {
-        openAiService.generateAndPublishCase(adminId, dto.getPassword());
-        return ResponseEntity.status(201).body(new ApiResponse("Case generated and published successfully"));
+        return ResponseEntity.status(200).body(new ApiResponse("Case generated successfully as DRAFT"));
     }
 }

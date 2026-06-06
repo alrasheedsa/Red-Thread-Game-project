@@ -16,7 +16,7 @@ public class EvidenceController {
 
     @GetMapping("/get")
     public ResponseEntity<?> getAllEvidences() {
-        return ResponseEntity.ok(evidenceService.getAllEvidences());
+        return ResponseEntity.status(200).body(evidenceService.getAllEvidences());
     }
     @PostMapping("/add/{caseId}")
     public ResponseEntity<?> addEvidence(@PathVariable Integer caseId, @RequestBody @Valid EvidenceIn dto) {
@@ -26,8 +26,7 @@ public class EvidenceController {
     @PutMapping("/update/{id}")
     public ResponseEntity<?> updateEvidence(@PathVariable Integer id, @RequestBody @Valid EvidenceIn dto) {
         evidenceService.updateEvidence(id, dto);
-        return ResponseEntity.ok(new ApiResponse("Evidence updated successfully"));
-    }
+        return ResponseEntity.status(200).body(new ApiResponse("Evidence updated successfully"));}
 
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> deleteEvidence(@PathVariable Integer id) {
@@ -36,6 +35,6 @@ public class EvidenceController {
     }
     @GetMapping("/case/{caseId}")
     public ResponseEntity<?> getEvidencesDetails(@PathVariable Integer caseId) {
-        return ResponseEntity.ok(evidenceService.getEvidencesDetails(caseId));
+        return ResponseEntity.status(200).body(evidenceService.getEvidencesDetails(caseId));
     }
 }

@@ -3,12 +3,17 @@ package com.example.redthreadgame.Service;
 import com.example.redthreadgame.Api.ApiException;
 import com.example.redthreadgame.DTO.IN.ProposalVoteIn;
 import com.example.redthreadgame.DTO.OUT.ProposalVoteOut;
+import com.example.redthreadgame.Enums.GameSessionStatusType;
+import com.example.redthreadgame.Enums.SolutionProposalStatusType;
 import com.example.redthreadgame.Model.Player;
 import com.example.redthreadgame.Model.ProposalVote;
 import com.example.redthreadgame.Enums.ProposalVoteType;
+import com.example.redthreadgame.Enums.SessionPlayerStatus;
+import com.example.redthreadgame.Model.SessionPlayer;
 import com.example.redthreadgame.Model.SolutionProposal;
 import com.example.redthreadgame.Repository.PlayerRepository;
 import com.example.redthreadgame.Repository.ProposalVoteRepository;
+import com.example.redthreadgame.Repository.SessionPlayerRepository;
 import com.example.redthreadgame.Repository.SolutionProposalRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -25,6 +30,8 @@ public class ProposalVoteService {
     private final ProposalVoteRepository proposalVoteRepository;
     private final SolutionProposalRepository solutionProposalRepository;
     private final PlayerRepository playerRepository;
+    private final SessionPlayerRepository sessionPlayerRepository;
+    private final SolutionProposalService solutionProposalService;
     private final ModelMapper modelMapper;
 
     public List<ProposalVoteOut> getAllProposalVotes() {
@@ -64,6 +71,8 @@ public class ProposalVoteService {
         Player player = playerRepository.findById(playerId)
                 .orElseThrow(() -> new ApiException("Player not found"));
 
+        checkCanVote(proposal, player);
+
         if (proposalVoteRepository.findProposalVoteBySolutionProposalIdAndPlayerId(proposalId, playerId) != null) {
             throw new ApiException("Player already voted on this proposal");
         }
@@ -76,8 +85,12 @@ public class ProposalVoteService {
         proposalVote.setPlayer(player);
         proposalVote.setVotedAt(LocalDateTime.now());
         updateProposalVoteCount(proposal, voteType, 1);
+        updateProposalStatusByMajority(proposal);
         proposalVoteRepository.save(proposalVote);
         solutionProposalRepository.save(proposal);
+
+        if (proposal.getStatus() == SolutionProposalStatusType.ACCEPTED_BY_PLAYERS)
+            solutionProposalService.evaluateProposal(proposal.getId());
     }
 
     public void updateProposalVote(Integer voteId, ProposalVoteIn dto) {
@@ -91,6 +104,7 @@ public class ProposalVoteService {
         }
 
         proposalVote.setVote(newVote);
+        updateProposalStatusByMajority(proposalVote.getSolutionProposal());
         proposalVoteRepository.save(proposalVote);
         solutionProposalRepository.save(proposalVote.getSolutionProposal());
     }
@@ -107,16 +121,16 @@ public class ProposalVoteService {
         SolutionProposal proposal = solutionProposalRepository.findById(proposalId)
                 .orElseThrow(() -> new ApiException("Solution proposal not found"));
 
-        Integer playersCount = proposal.getGameSession().getPlayersCount();
-        return proposal.getAcceptCount() > playersCount / 2;
+        Integer requiredVotes = getRequiredVotes(proposal);
+        return proposal.getAcceptCount() >= requiredVotes;
     }
 
     public Boolean hasMajorityRejected(Integer proposalId) {
         SolutionProposal proposal = solutionProposalRepository.findById(proposalId)
                 .orElseThrow(() -> new ApiException("Solution proposal not found"));
 
-        Integer playersCount = proposal.getGameSession().getPlayersCount();
-        return proposal.getRejectCount() >= playersCount / 2;
+        Integer requiredVotes = getRequiredVotes(proposal);
+        return proposal.getRejectCount() >= requiredVotes;
     }
 
     private ProposalVote checkProposalVote(Integer id) {
@@ -139,5 +153,32 @@ public class ProposalVoteService {
         } else {
             proposal.setRejectCount(proposal.getRejectCount() + amount);
         }
+    }
+
+    private void checkCanVote(SolutionProposal proposal, Player player) {
+        if (proposal.getGameSession().getStatus() != GameSessionStatusType.IN_PROGRESS)
+            throw new ApiException("Game session is not in progress");
+
+        SessionPlayer sessionPlayer = sessionPlayerRepository.findByGameSessionAndPlayer(proposal.getGameSession(), player);
+        if (sessionPlayer == null || sessionPlayer.getStatus() != SessionPlayerStatus.JOINED)
+            throw new ApiException("Player is not joined in this game session");
+
+        if (proposal.getPlayer().getId().equals(player.getId()))
+            throw new ApiException("Proposal owner cannot vote on his own proposal");
+
+        if (proposal.getStatus() != SolutionProposalStatusType.PENDING)
+            throw new ApiException("You cannot vote on this proposal");
+    }
+
+    private void updateProposalStatusByMajority(SolutionProposal proposal) {
+        Integer requiredVotes = getRequiredVotes(proposal);
+        if (proposal.getAcceptCount() >= requiredVotes)
+            proposal.setStatus(SolutionProposalStatusType.ACCEPTED_BY_PLAYERS);
+        else if (proposal.getRejectCount() >= requiredVotes)
+            proposal.setStatus(SolutionProposalStatusType.REJECTED_BY_PLAYERS);
+    }
+
+    private Integer getRequiredVotes(SolutionProposal proposal) {
+        return (int) Math.ceil(proposal.getGameSession().getPlayersCount() / 2.0);
     }
 }

@@ -21,4 +21,8 @@ public class CaseIn {
 
     @NotEmpty(message = "difficulty cannot be empty")
     private String difficulty;
+
+    //for admin
+    @NotEmpty(message = "password cannot be empty")
+    private String password;
 }

@@ -18,5 +18,10 @@ public class SuspectIn {
     @NotNull(message = "age cannot be null")
     @Min(value = 1, message = "age must be positive")
     private Integer age;
+    @NotEmpty(message = "gender cannot be empty")
+    private String gender;
+    @NotEmpty(message = "voice tone cannot be empty")
+    private String voiceTone;
+    private String reason;
 
 }

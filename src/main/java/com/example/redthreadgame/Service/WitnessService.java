@@ -43,6 +43,8 @@ public class WitnessService {
         old.setName(dto.getName());
         old.setStatement(dto.getStatement());
         old.setReliabilityScore(dto.getReliabilityScore());
+        old.setGender(dto.getGender());
+        old.setVoiceTone(dto.getVoiceTone());
 
         witnessRepository.save(old);
     }
@@ -67,6 +69,9 @@ public class WitnessService {
 
         String prompt = "Witness name: " + witness.getName()
                 + "\nWitness statement: " + witness.getStatement()
+                + "\nWitness gender: " + witness.getGender()
+                + "\nWitness voice tone: " + witness.getVoiceTone()
+                + "\nRules: Answer in English only. Match the witness voice tone naturally. Do not include stage directions, brackets, emotion labels, or sound effects."
                 + "\nPlayer question: " + dto.getQuestionText();
 
         String answer = openAiService.generateAnswer(prompt);
@@ -74,7 +79,7 @@ public class WitnessService {
             answer = witness.getStatement();
         }
 
-        String audioFileName = elevenLabsService.generateVoice(answer);
+        String audioFileName = elevenLabsService.generateVoice(answer, witness.getGender(), witness.getVoiceTone());
         return new VoiceAnswerOut(answer, audioFileName);
     }
 
