@@ -37,5 +37,9 @@ public class EvidenceController {
     public ResponseEntity<?> getEvidencesDetails(@PathVariable Integer caseId) {
         return ResponseEntity.status(200).body(evidenceService.getEvidencesDetails(caseId));
     }
+    @PostMapping("/link/{evidenceId}/{suspectId}/{gameSessionId}")
+    public ResponseEntity<?> linkEvidenceToSuspect(@PathVariable Integer evidenceId, @PathVariable Integer suspectId, @PathVariable Integer gameSessionId) {
+        return ResponseEntity.status(200).body(evidenceService.linkEvidenceToSuspect(evidenceId, suspectId, gameSessionId));
+    }
 
 }

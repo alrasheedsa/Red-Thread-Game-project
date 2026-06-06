@@ -34,13 +34,15 @@ public class WitnessService {
         }
         return witnesses;
     }
-    public void addWitness(Integer caseId, WitnessIn dto){
+
+    public void addWitness(Integer caseId, WitnessIn dto) {
         Case c = caseService.checkCase(caseId);
-        Witness witness= modelMapper.map(dto, Witness.class);
+        Witness witness = modelMapper.map(dto, Witness.class);
         witness.setWitnessCase(c);
 
         witnessRepository.save(witness);
     }
+
     public void updateWitness(Integer id, WitnessIn dto) {
         Witness old = checkWitness(id);
         old.setName(dto.getName());
@@ -51,9 +53,10 @@ public class WitnessService {
 
         witnessRepository.save(old);
     }
-   public void deleteWitness(Integer id){
+
+    public void deleteWitness(Integer id) {
         witnessRepository.delete(checkWitness(id));
-   }
+    }
     //---------------------------------------------------END CRED-----------------------------------------------------------------------
 
     public List<WitnessOut> getWitnessesDetails(Integer caseId) {
@@ -68,6 +71,10 @@ public class WitnessService {
 
     public String confrontWitnesses(Integer witnessId1, Integer witnessId2, Integer gameSessionId) {
         GameSession gameSession = checkGameSession(gameSessionId);
+
+        if (gameSession.getStatus() != GameSessionStatusType.IN_PROGRESS)
+            throw new ApiException("Game session is not in progress");
+
         Witness witness1 = checkWitness(witnessId1);
         Witness witness2 = checkWitness(witnessId2);
 
@@ -77,27 +84,25 @@ public class WitnessService {
             throw new ApiException("Witness 2 does not belong to this case");
 
         String prompt = """
-            You are a detective analyst.
-            
-            Witness 1: %s
-            Statement: %s
-            
-            Witness 2: %s
-            Statement: %s
-            
-            Analyze both statements and identify:
-            1. Where they agree
-            2. Where they contradict each other
-            3. Which witness seems more credible and why
-            
-            Respond in this exact JSON format:
-            {
-              "agree": "what they agree on",
-              "contradict": "where they contradict",
-              "moreCredible": "which witness is more credible and why"
-            }
-            Return ONLY the JSON, no extra text.
-            """.formatted(
+                You are a detective analyst.
+                
+                Witness 1: %s
+                Statement: %s
+                
+                Witness 2: %s
+                Statement: %s
+                
+                Analyze both statements and identify:
+                1. Where they agree
+                2. Where they contradict each other
+                
+                Respond in this exact JSON format:
+                {
+                  "agree": "what they agree on",
+                  "contradict": "where they contradict"
+                }
+                Return ONLY the JSON, no extra text.
+                """.formatted(
                 witness1.getName(), witness1.getStatement(),
                 witness2.getName(), witness2.getStatement()
         );
@@ -107,46 +112,46 @@ public class WitnessService {
     }
 
     public String retractWitnessStatement(Integer witnessId, Integer gameSessionId) {
-        // تحقق من الجلسة
+        //check gameSession
         GameSession gameSession = gameSessionRepository.findGameSessionById(gameSessionId);
         if (gameSession == null) throw new ApiException("Game session not found");
         if (gameSession.getStatus() != GameSessionStatusType.IN_PROGRESS)
             throw new ApiException("Game session is not in progress");
 
-        // تحقق من الشاهد
+        //check witness
         Witness witness = checkWitness(witnessId);
         if (!witness.getWitnessCase().getId().equals(gameSession.getSessionCase().getId()))
             throw new ApiException("Witness does not belong to this case");
 
         String prompt = """
-            You are roleplaying as a witness in a detective mystery game who is now retracting their statement.
-            
-            Case scenario: %s
-            
-            Witness name: %s
-            Original statement: %s
-            Witness voice tone: %s
-            Witness reliability score: %s out of 100
-            
-            The witness is now scared, pressured, or hiding something.
-            They retract part of their original statement and give a new contradicting version.
-            
-            Rules:
-            - Do NOT reveal who is guilty.
-            - Make the new statement contradict the original in a subtle but suspicious way.
-            - Match the witness personality and voice tone.
-            - Make it dramatic and leave the players confused.
-            - Answer in English only.
-            
-            Respond in this exact JSON format:
-            {
-              "originalStatement": "the original statement",
-              "newStatement": "the new contradicting statement",
-              "reason": "why the witness is retracting - scared, paid off, hiding something, etc",
-              "suspicionLevel": "HIGH or MEDIUM or LOW"
-            }
-            Return ONLY the JSON, no extra text.
-            """.formatted(
+                You are roleplaying as a witness in a detective mystery game who is now retracting their statement.
+                
+                Case scenario: %s
+                
+                Witness name: %s
+                Original statement: %s
+                Witness voice tone: %s
+                Witness reliability score: %s out of 100
+                
+                The witness is now scared, pressured, or hiding something.
+                They retract part of their original statement and give a new contradicting version.
+                
+                Rules:
+                - Do NOT reveal who is guilty.
+                - Make the new statement contradict the original in a subtle but suspicious way.
+                - Match the witness personality and voice tone.
+                - Make it dramatic and leave the players confused.
+                - Answer in English only.
+                
+                Respond in this exact JSON format:
+                {
+                  "originalStatement": "the original statement",
+                  "newStatement": "the new contradicting statement",
+                  "reason": "why the witness is retracting - scared, paid off, hiding something, etc",
+                  "suspicionLevel": "HIGH or MEDIUM or LOW"
+                }
+                Return ONLY the JSON, no extra text.
+                """.formatted(
                 gameSession.getSessionCase().getScenario(),
                 witness.getName(),
                 witness.getStatement(),
@@ -162,11 +167,10 @@ public class WitnessService {
         GameSession gameSession = gameSessionRepository.findGameSessionById(gameSessionId);
         if (gameSession == null) throw new ApiException("Game session not found");
 
-        // كل شهود القضية
-        List<Witness> allWitnesses = witnessRepository
-                .findWitnessesByWitnessCaseId(gameSession.getSessionCase().getId());
+        //allWitnesses
+        List<Witness> allWitnesses = witnessRepository.findWitnessesByWitnessCaseId(gameSession.getSessionCase().getId());
 
-        // ids الشهود اللي تم سؤالهم في هذه الجلسة
+        // Witness that got questioned
         List<Integer> questionedIds = new ArrayList<>();
         for (Question q : gameSession.getQuestions()) {
             if (q.getTargetType() == QuestionTargetType.WITNESS && q.getWitness() != null) {
@@ -174,14 +178,13 @@ public class WitnessService {
             }
         }
 
-        // حذف اللي تم سؤالهم
+        //delete suspect that got questioned
         List<WitnessOut> notQuestioned = new ArrayList<>();
         for (Witness w : allWitnesses) {
             if (!questionedIds.contains(w.getId())) {
                 notQuestioned.add(modelMapper.map(w, WitnessOut.class));
             }
         }
-
         if (notQuestioned.isEmpty())
             throw new ApiException("All witnesses have been questioned");
 

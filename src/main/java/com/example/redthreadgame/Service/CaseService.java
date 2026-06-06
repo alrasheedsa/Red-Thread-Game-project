@@ -22,7 +22,7 @@ public class CaseService {
 
     private final ModelMapper modelMapper;
     private final CaseRepository caseRepository;
-     private final AdminService adminService;
+    private final AdminService adminService;
     private final PlayerRepository playerRepository;
     private final SessionPlayerRepository sessionPlayerRepository;
 
@@ -51,121 +51,118 @@ public class CaseService {
     //---------------------------------------------------END CRED-----------------------------------------------------------------------
 
     //endpoint admin publish case
-public void publishCase(Integer adminId, String password, Integer caseId){
-    adminService.verifyAdmin(adminId, password);
-    Case c = checkCase(caseId);
-    if (c.getStatus().equals("PUBLISHED"))
-        throw new ApiException("Case is already published");
-    c.setStatus("PUBLISHED");
+    public void publishCase(Integer adminId, String password, Integer caseId){
+        adminService.verifyAdmin(adminId, password);
+        Case c = checkCase(caseId);
+        if (c.getStatus().equals("PUBLISHED"))
+            throw new ApiException("Case is already published");
+        c.setStatus("PUBLISHED");
 
-    caseRepository.save(c);
-}
-
-//move to derft by admin
-public void moveCaseToDraft(Integer adminId, String password, Integer caseId) {
-    adminService.verifyAdmin(adminId,password );
-    Case c = checkCase(caseId);
-    if (c.getStatus().equals("DRAFT"))
-        throw new ApiException("Case is already in DRAFT");
-    c.setStatus("DRAFT");
-    caseRepository.save(c);
-}
-//players show case
-public List<CaseOut> getPublishedCases() {
-    List<CaseOut> cases = new ArrayList<>();
-    for (Case c : caseRepository.findCasesByStatus("PUBLISHED")) {
-        cases.add(modelMapper.map(c, CaseOut.class));
+        caseRepository.save(c);
     }
-    return cases;
-}
 
-//casse more group lost
-public CaseOut getMostLost() {
-    List<Case> publishedCases = caseRepository.findCasesByStatus("PUBLISHED");
-    if (publishedCases.isEmpty())
-        throw new ApiException("No published cases available");
+    //move to daft by admin
+    public void moveCaseToDraft(Integer adminId, String password, Integer caseId) {
+        adminService.verifyAdmin(adminId,password );
+        Case c = checkCase(caseId);
+        if (c.getStatus().equals("DRAFT"))
+            throw new ApiException("Case is already in DRAFT");
+        c.setStatus("DRAFT");
+        caseRepository.save(c);
+    }
+    //players shows cases
+    public List<CaseOut> getPublishedCases() {
+        List<CaseOut> cases = new ArrayList<>();
+        for (Case c : caseRepository.findCasesByStatus("PUBLISHED")) {
+            cases.add(modelMapper.map(c, CaseOut.class));
+        }
+        return cases;
+    }
 
-    Case hardestCase = null;
-    int maxLosses = -1;
+    //casse more group lost
+    public CaseOut getMostLost() {
+        List<Case> publishedCases = caseRepository.findCasesByStatus("PUBLISHED");
+        if (publishedCases.isEmpty())
+            throw new ApiException("No published cases available");
 
-    for (Case c : publishedCases) {
-        int losses = 0;
-        for (GameSession session : c.getGameSessions()) {
-            if (session.getStatus() == GameSessionStatusType.LOST) {
-                losses++;
+        Case hardestCase = null;
+        int maxLosses = -1;
+
+        for (Case c : publishedCases) {
+            int losses = 0;
+            for (GameSession session : c.getGameSessions()) {
+                if (session.getStatus() == GameSessionStatusType.LOST) {
+                    losses++;
+                }
+            }
+            if (losses > maxLosses) {
+                maxLosses = losses;
+                hardestCase = c;
             }
         }
-        if (losses > maxLosses) {
-            maxLosses = losses;
-            hardestCase = c;
-        }
+
+        if (hardestCase == null || maxLosses == 0)
+            throw new ApiException("No data available yet");
+
+        return modelMapper.map(hardestCase, CaseOut.class);
     }
 
-    if (hardestCase == null || maxLosses == 0)
-        throw new ApiException("No data available yet");
+    // case most group won
+    public CaseOut getMostWon() {
+        List<Case> publishedCases = caseRepository.findCasesByStatus("PUBLISHED");
+        if (publishedCases.isEmpty())
+            throw new ApiException("No published cases available");
 
-    return modelMapper.map(hardestCase, CaseOut.class);
-}
+        Case easiestCase = null;
+        int maxWins = -1;
 
-// case most group won
-public CaseOut getMostWon() {
-    List<Case> publishedCases = caseRepository.findCasesByStatus("PUBLISHED");
-    if (publishedCases.isEmpty())
-        throw new ApiException("No published cases available");
-
-    Case easiestCase = null;
-    int maxWins = -1;
-
-    for (Case c : publishedCases) {
-        int wins = 0;
-        for (GameSession session : c.getGameSessions()) {
-            if (session.getStatus() == GameSessionStatusType.WON) {
-                wins++;
+        for (Case c : publishedCases) {
+            int wins = 0;
+            for (GameSession session : c.getGameSessions()) {
+                if (session.getStatus() == GameSessionStatusType.WON) {
+                    wins++;
+                }
+            }
+            if (wins > maxWins) {
+                maxWins = wins;
+                easiestCase = c;
             }
         }
-        if (wins > maxWins) {
-            maxWins = wins;
-            easiestCase = c;
-        }
+
+        if (easiestCase == null || maxWins == 0)
+            throw new ApiException("No data available yet");
+
+        return modelMapper.map(easiestCase, CaseOut.class);
     }
 
-    if (easiestCase == null || maxWins == 0)
-        throw new ApiException("No data available yet");
+    //cases that not played by player
+    public List<CaseOut> getNotPlayedCases(Integer playerId) {
+        Player player = playerRepository.findPlayerById(playerId);
+        if (player == null) throw new ApiException("Player not found");
+        //all cases
+        List<Case> publishedCases = caseRepository.findCasesByStatus("PUBLISHED");
 
-    return modelMapper.map(easiestCase, CaseOut.class);
-}
-
-//cases that not played by player
-public List<CaseOut> getNotPlayedCases(Integer playerId) {
-    Player player = playerRepository.findPlayerById(playerId);
-    if (player == null) throw new ApiException("Player not found");
-
-    // كل القضايا المنشورة
-    List<Case> publishedCases = caseRepository.findCasesByStatus("PUBLISHED");
-
-    // القضايا اللي لعبها اللاعب
-    List<Integer> playedCaseIds = new ArrayList<>();
-    for (SessionPlayer s : sessionPlayerRepository.findAllByPlayerId(playerId)) {
-        if (s.getGameSession().getSessionCase() != null) {
-            playedCaseIds.add(s.getGameSession().getSessionCase().getId());
+        //cases that played
+        List<Integer> playedCaseIds = new ArrayList<>();
+        for (SessionPlayer s : sessionPlayerRepository.findAllByPlayerId(playerId)) {
+            if (s.getGameSession().getSessionCase() != null) {
+                playedCaseIds.add(s.getGameSession().getSessionCase().getId());
+            }
         }
+        //deleted cases that played
+        List<CaseOut> notPlayed = new ArrayList<>();
+        for (Case c : publishedCases) {
+            if (!playedCaseIds.contains(c.getId())) {
+                notPlayed.add(modelMapper.map(c, CaseOut.class));
+            }
+        }
+        if (notPlayed.isEmpty())
+            throw new ApiException("You have played all available cases");
+
+        return notPlayed;
     }
 
-    // حذف اللي لعبها
-    List<CaseOut> notPlayed = new ArrayList<>();
-    for (Case c : publishedCases) {
-        if (!playedCaseIds.contains(c.getId())) {
-            notPlayed.add(modelMapper.map(c, CaseOut.class));
-        }
-    }
-
-    if (notPlayed.isEmpty())
-        throw new ApiException("You have played all available cases");
-
-    return notPlayed;
-}
-
-//helper method
+    //helper method
     public Case checkCase(Integer id) {
         Case c = caseRepository.findCaseById(id);
         if (c == null)
