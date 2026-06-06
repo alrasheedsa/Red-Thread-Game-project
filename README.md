@@ -44,7 +44,6 @@ Base URL: `/api/v1/question`
 | POST | `/ask-suspect/{gameSessionId}/{playerId}/{suspectId}` | Ask suspect using AI and ElevenLabs |
 | GET | `/count/{gameSessionId}` | Count questions in session |
 | GET | `/next-penalty/{gameSessionId}` | Get next question penalty |
-| GET | `/get-by-session/{gameSessionId}` | Get questions by session |
 
 #### Hint
 
@@ -52,7 +51,6 @@ Base URL: `/api/v1/hint`
 
 | Method | Endpoint | Description |
 | --- | --- | --- |
-| GET | `/get-by-session/{gameSessionId}` | Get hints by session |
 | GET | `/count/{gameSessionId}` | Count hints in session |
 | GET | `/next-penalty/{gameSessionId}` | Get next hint penalty |
 | POST | `/request/{gameSessionId}/{playerId}` | Request AI hint |
@@ -64,7 +62,6 @@ Base URL: `/api/v1/note`
 | Method | Endpoint | Description |
 | --- | --- | --- |
 | POST | `/add/{gameSessionId}/{playerId}` | Add shared note |
-| GET | `/get-by-session/{gameSessionId}` | Get notes by session |
 | GET | `/latest/{gameSessionId}` | Get latest notes |
 | GET | `/search/{gameSessionId}` | Search notes by keyword |
 
@@ -74,7 +71,6 @@ Base URL: `/api/v1/solution-proposal`
 
 | Method | Endpoint | Description |
 | --- | --- | --- |
-| GET | `/get-by-session/{gameSessionId}` | Get proposals by session |
 | POST | `/submit/{gameSessionId}/{playerId}/{suspectId}` | Submit solution proposal |
 | GET | `/active/{gameSessionId}` | Get active pending proposal |
 | GET | `/result/{gameSessionId}` | Get latest proposal result |
@@ -86,7 +82,6 @@ Base URL: `/api/v1/proposal-vote`
 | Method | Endpoint | Description |
 | --- | --- | --- |
 | POST | `/add/{proposalId}/{playerId}` | Vote ACCEPT or REJECT |
-| GET | `/get-by-proposal/{proposalId}` | Get votes by proposal |
 
 ## Game Flow
 
