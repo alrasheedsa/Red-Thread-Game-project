@@ -40,7 +40,6 @@ Base URL: `/api/v1/question`
 
 | Method | Endpoint | Description |
 | --- | --- | --- |
-| GET | `/get` | Get all questions |
 | POST | `/ask-witness/{gameSessionId}/{playerId}/{witnessId}` | Ask witness using AI and ElevenLabs |
 | POST | `/ask-suspect/{gameSessionId}/{playerId}/{suspectId}` | Ask suspect using AI and ElevenLabs |
 | GET | `/count/{gameSessionId}` | Count questions in session |
@@ -64,10 +63,7 @@ Base URL: `/api/v1/note`
 
 | Method | Endpoint | Description |
 | --- | --- | --- |
-| GET | `/get` | Get all notes |
 | POST | `/add/{gameSessionId}/{playerId}` | Add shared note |
-| PUT | `/update/{noteId}` | Update note |
-| DELETE | `/delete/{noteId}` | Delete note |
 | GET | `/get-by-session/{gameSessionId}` | Get notes by session |
 | GET | `/latest/{gameSessionId}` | Get latest notes |
 | GET | `/search/{gameSessionId}` | Search notes by keyword |
@@ -89,7 +85,6 @@ Base URL: `/api/v1/proposal-vote`
 
 | Method | Endpoint | Description |
 | --- | --- | --- |
-| GET | `/get` | Get all votes |
 | POST | `/add/{proposalId}/{playerId}` | Vote ACCEPT or REJECT |
 | GET | `/get-by-proposal/{proposalId}` | Get votes by proposal |
 
