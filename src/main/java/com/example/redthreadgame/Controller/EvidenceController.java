@@ -37,4 +37,5 @@ public class EvidenceController {
     public ResponseEntity<?> getEvidencesDetails(@PathVariable Integer caseId) {
         return ResponseEntity.status(200).body(evidenceService.getEvidencesDetails(caseId));
     }
+
 }

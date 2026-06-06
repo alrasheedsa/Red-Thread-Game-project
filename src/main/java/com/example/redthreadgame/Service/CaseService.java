@@ -3,10 +3,12 @@ package com.example.redthreadgame.Service;
 import com.example.redthreadgame.Api.ApiException;
 import com.example.redthreadgame.DTO.IN.CaseIn;
 import com.example.redthreadgame.DTO.OUT.CaseOut;
-import com.example.redthreadgame.Model.Admin;
-import com.example.redthreadgame.Model.Case;
+import com.example.redthreadgame.Enums.GameSessionStatusType;
+import com.example.redthreadgame.Model.*;
 import com.example.redthreadgame.Repository.AdminRepository;
 import com.example.redthreadgame.Repository.CaseRepository;
+import com.example.redthreadgame.Repository.PlayerRepository;
+import com.example.redthreadgame.Repository.SessionPlayerRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -22,6 +24,8 @@ public class CaseService {
     private final ModelMapper modelMapper;
     private final CaseRepository caseRepository;
      private final AdminService adminService;
+    private final PlayerRepository playerRepository;
+    private final SessionPlayerRepository sessionPlayerRepository;
 
     public List<CaseOut> getAllCases() {
         List<CaseOut> cases = new ArrayList<>();
@@ -76,14 +80,92 @@ public List<CaseOut> getPublishedCases() {
     return cases;
 }
 
-//sort cases by difficulty
-public List<CaseOut> getPublishedCasesByDifficulty(String difficulty) {
-    List<CaseOut> cases = new ArrayList<>();
-    for (Case c : caseRepository.findCasesByStatusAndDifficulty("PUBLISHED", difficulty.toUpperCase())) {
-        cases.add(modelMapper.map(c, CaseOut.class));
+//casse more group lost
+public CaseOut getMostLost() {
+    List<Case> publishedCases = caseRepository.findCasesByStatus("PUBLISHED");
+    if (publishedCases.isEmpty())
+        throw new ApiException("No published cases available");
+
+    Case hardestCase = null;
+    int maxLosses = -1;
+
+    for (Case c : publishedCases) {
+        int losses = 0;
+        for (GameSession session : c.getGameSessions()) {
+            if (session.getStatus() == GameSessionStatusType.LOST) {
+                losses++;
+            }
+        }
+        if (losses > maxLosses) {
+            maxLosses = losses;
+            hardestCase = c;
+        }
     }
-    return cases;
+
+    if (hardestCase == null || maxLosses == 0)
+        throw new ApiException("No data available yet");
+
+    return modelMapper.map(hardestCase, CaseOut.class);
 }
+
+// case most group won
+public CaseOut getMostWon() {
+    List<Case> publishedCases = caseRepository.findCasesByStatus("PUBLISHED");
+    if (publishedCases.isEmpty())
+        throw new ApiException("No published cases available");
+
+    Case easiestCase = null;
+    int maxWins = -1;
+
+    for (Case c : publishedCases) {
+        int wins = 0;
+        for (GameSession session : c.getGameSessions()) {
+            if (session.getStatus() == GameSessionStatusType.WON) {
+                wins++;
+            }
+        }
+        if (wins > maxWins) {
+            maxWins = wins;
+            easiestCase = c;
+        }
+    }
+
+    if (easiestCase == null || maxWins == 0)
+        throw new ApiException("No data available yet");
+
+    return modelMapper.map(easiestCase, CaseOut.class);
+}
+
+//cases that not played by player
+public List<CaseOut> getNotPlayedCases(Integer playerId) {
+    Player player = playerRepository.findPlayerById(playerId);
+    if (player == null) throw new ApiException("Player not found");
+
+    // كل القضايا المنشورة
+    List<Case> publishedCases = caseRepository.findCasesByStatus("PUBLISHED");
+
+    // القضايا اللي لعبها اللاعب
+    List<Integer> playedCaseIds = new ArrayList<>();
+    for (SessionPlayer s : sessionPlayerRepository.findAllByPlayerId(playerId)) {
+        if (s.getGameSession().getSessionCase() != null) {
+            playedCaseIds.add(s.getGameSession().getSessionCase().getId());
+        }
+    }
+
+    // حذف اللي لعبها
+    List<CaseOut> notPlayed = new ArrayList<>();
+    for (Case c : publishedCases) {
+        if (!playedCaseIds.contains(c.getId())) {
+            notPlayed.add(modelMapper.map(c, CaseOut.class));
+        }
+    }
+
+    if (notPlayed.isEmpty())
+        throw new ApiException("You have played all available cases");
+
+    return notPlayed;
+}
+
 //helper method
     public Case checkCase(Integer id) {
         Case c = caseRepository.findCaseById(id);

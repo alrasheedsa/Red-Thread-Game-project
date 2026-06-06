@@ -55,4 +55,14 @@ public class SuspectController {
         String result = suspectService.checkCorrectSuspect(gameSessionId, suspectId, dto.getReason());
         return ResponseEntity.status(200).body(result);
     }
+
+    @PostMapping("/confront/{suspectId}/{witnessId}/{gameSessionId}")
+    public ResponseEntity<?> confrontSuspectWithWitness(@PathVariable Integer suspectId, @PathVariable Integer witnessId, @PathVariable Integer gameSessionId) {
+        return ResponseEntity.status(200).body(suspectService.confrontSuspectWithWitness(suspectId, witnessId, gameSessionId));
+    }
+
+    @GetMapping("/not-questioned/{gameSessionId}")
+    public ResponseEntity<?> getNotQuestionedSuspects(@PathVariable Integer gameSessionId) {
+        return ResponseEntity.status(200).body(suspectService.getNotQuestionedSuspects(gameSessionId));
+    }
 }

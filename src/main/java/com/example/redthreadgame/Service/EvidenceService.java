@@ -4,8 +4,13 @@ import com.example.redthreadgame.Api.ApiException;
 import com.example.redthreadgame.DTO.IN.EvidenceIn;
 import com.example.redthreadgame.DTO.OUT.EvidenceOut;
 import com.example.redthreadgame.Model.Case;
+import com.example.redthreadgame.Enums.GameSessionStatusType;
 import com.example.redthreadgame.Model.Evidence;
+import com.example.redthreadgame.Model.GameSession;
+import com.example.redthreadgame.Model.Suspect;
 import com.example.redthreadgame.Repository.EvidenceRepository;
+import com.example.redthreadgame.Repository.GameSessionRepository;
+import com.example.redthreadgame.Repository.SuspectRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -20,6 +25,10 @@ public class EvidenceService {
     private final ModelMapper modelMapper;
     private final EvidenceRepository evidenceRepository;
      private final CaseService caseService;
+    private final SuspectRepository suspectRepository;
+    private final GameSessionRepository gameSessionRepository;
+    private final OpenAiService openAiService;
+
 
     public List<EvidenceOut> getAllEvidences() {
         List<EvidenceOut> evidences = new ArrayList<>();

@@ -12,6 +12,8 @@ import com.example.redthreadgame.Model.SessionPlayer;
 import com.example.redthreadgame.Model.SolutionProposal;
 import com.example.redthreadgame.Model.Suspect;
 import com.example.redthreadgame.Repository.*;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -137,16 +139,20 @@ public class SolutionProposalService {
         if (joinedPlayers.isEmpty())
             throw new ApiException("No joined players found in this game session");
 
-        Boolean isCorrect = openAiService.evaluateSolution(
-                proposal.getReason(),
-                proposal.getSuspect().getName(),
-                proposal.getSuspect().getAge(),
-                solution.getJustification()
-        );
+        String analysisResult = openAiService.evaluateSolution(proposal.getReason(), proposal.getSuspect().getName(), proposal.getSuspect().getAge(), solution.getJustification());
+
+        boolean isCorrect;
+        try {
+            JsonNode analysisJson = new ObjectMapper().readTree(analysisResult);
+            isCorrect = analysisJson.path("isCorrect").asBoolean();
+        } catch (Exception e) {
+            throw new ApiException("Failed to parse AI response");
+        }
+
         if (!isCorrect) {
             proposal.setStatus(SolutionProposalStatusType.WRONG);
             gameSession.setScore(0);
-            gameSession.setStatus(GameSessionStatusType.COMPLETED);
+            gameSession.setStatus(GameSessionStatusType.LOST);
             gameSession.setEndedAt(LocalDateTime.now());
             gameSessionRepository.save(gameSession);
             solutionProposalRepository.save(proposal);
@@ -159,7 +165,7 @@ public class SolutionProposalService {
 
         proposal.setStatus(SolutionProposalStatusType.CORRECT);
         gameSession.setScore(totalScore);
-        gameSession.setStatus(GameSessionStatusType.COMPLETED);
+        gameSession.setStatus(GameSessionStatusType.WON);
         gameSession.setEndedAt(LocalDateTime.now());
 
         for (SessionPlayer s : joinedPlayers) {

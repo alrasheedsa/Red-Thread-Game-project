@@ -154,45 +154,52 @@ public class OpenAiService {
     }
 
     //evaluation solution
-    public boolean evaluateSolution(String playerReason, String accusedSuspectName, Integer accusedSuspectAge, String correctJustification) {
+    public String evaluateSolution(String playerReason, String accusedSuspectName, Integer accusedSuspectAge, String correctJustification) {
         String prompt = """
-                You are a mystery game judge.
-                
-                Correct solution justification:
-                %s
-                
-                Player accused suspect:
-                Name: %s
-                Age: %s
-                
-                Player reason:
-                %s
-                
-                The correct suspect is not stored in a separate database field.
-                Extract the correct suspect from the correct solution justification.
-                
-                Return true only if:
-                - The accused suspect matches the culprit in the correct solution justification.
-                - The player's reason reasonably matches the correct motive and evidence.
-                
-                Reply with ONLY "true" or "false".
-                """.formatted(correctJustification, accusedSuspectName, accusedSuspectAge, playerReason);
+            You are a mystery game judge analyzing a detective team's performance.
+            
+            Correct solution justification:
+            %s
+            
+            Player accused suspect:
+            Name: %s
+            Age: %s
+            
+            Player reason:
+            %s
+            
+            The correct suspect is not stored in a separate database field.
+            Extract the correct suspect from the correct solution justification.
+            
+            Analyze whether the player correctly identified the culprit and provided a reasonable explanation.
+            
+            Respond in this exact JSON format:
+            {
+              "isCorrect": true or false,
+              "result": "You won! Great detective work!" or "You lost! Better luck next time!",
+              "analysis": "2-3 sentences analyzing how well the team played",
+              "focusOn": "1-2 specific areas to improve next time"
+            }
+            Return ONLY the JSON, no extra text.
+            """.formatted(correctJustification, accusedSuspectName, accusedSuspectAge, playerReason);
 
         String response = WebClient.builder()
-                .baseUrl("https://api.openai.com").build().post().uri("/v1/chat/completions").header("Authorization", "Bearer " + openAiApiKey).header("Content-Type", "application/json")
+                .baseUrl("https://api.openai.com").build().post().uri("/v1/chat/completions")
+                .header("Authorization", "Bearer " + openAiApiKey)
+                .header("Content-Type", "application/json")
                 .bodyValue("""
-                        {
-                          "model": "gpt-4o-mini",
-                          "messages": [{"role": "user", "content": "%s"}],
-                          "temperature": 0.0
-                        }
-                        """.formatted(prompt.replace("\"", "\\\"").replace("\n", "\\n")))
+                    {
+                      "model": "gpt-4o-mini",
+                      "messages": [{"role": "user", "content": "%s"}],
+                      "temperature": 0.0
+                    }
+                    """.formatted(prompt.replace("\"", "\\\"").replace("\n", "\\n")))
                 .retrieve().bodyToMono(String.class).block();
 
         try {
             JsonNode root = objectMapper.readTree(response);
-            String result = root.path("choices").get(0).path("message").path("content").asText().trim().toLowerCase();
-            return result.equals("true");
+            return root.path("choices").get(0).path("message").path("content").asText().trim()
+                    .replace("```json", "").replace("```", "").trim();
         } catch (Exception e) {
             throw new ApiException("Failed to evaluate solution: " + e.getMessage());
         }
