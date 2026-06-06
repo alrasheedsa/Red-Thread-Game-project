@@ -40,6 +40,9 @@ public class GameSessionService {
 
     public void addGameSession(Integer caseId,Integer playerId,GameSessionIn gameSessionIn){
         Case sessionCase = checkCase(caseId);
+        if (!sessionCase.getStatus().equals("PUBLISHED"))
+            throw new ApiException("Case must be published before creating a game session");
+
         Player player = checkPlayer(playerId);
         String code = generateCode();
 
@@ -63,6 +66,8 @@ public class GameSessionService {
 
     public void updateGameSession(Integer id, GameSessionIn gameSessionIn){
         GameSession oldGameSession = checkGameSession(id);
+        if (oldGameSession.getStatus() != PENDING)
+            throw new ApiException("You can only update a pending session");
 
         oldGameSession.setPlayersCount(gameSessionIn.getPlayersCount());
         oldGameSession.setIsPrivate(gameSessionIn.getIsPrivate());
@@ -72,6 +77,9 @@ public class GameSessionService {
 
     public void deleteGameSession(Integer id){
         GameSession gameSession = checkGameSession(id);
+        if (gameSession.getStatus() != PENDING)
+            throw new ApiException("You can only delete a pending session");
+
         gameSessionRepository.delete(gameSession);
     }
 
@@ -80,7 +88,9 @@ public class GameSessionService {
     public List<GameSessionOut> getPublicGameSessions(){
         List<GameSessionOut> gameSessions = new ArrayList<>();
         for(GameSession g: gameSessionRepository.findAllByIsPrivateFalse()){
-            gameSessions.add(modelMapper.map(g, GameSessionOut.class));
+            if (g.getStatus() == PENDING) {
+                gameSessions.add(modelMapper.map(g, GameSessionOut.class));
+            }
         }
         return gameSessions;
     }

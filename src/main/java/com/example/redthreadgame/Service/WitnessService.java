@@ -1,9 +1,7 @@
 package com.example.redthreadgame.Service;
 
 import com.example.redthreadgame.Api.ApiException;
-import com.example.redthreadgame.DTO.IN.QuestionIn;
 import com.example.redthreadgame.DTO.IN.WitnessIn;
-import com.example.redthreadgame.DTO.OUT.VoiceAnswerOut;
 import com.example.redthreadgame.DTO.OUT.WitnessOut;
 import com.example.redthreadgame.Enums.GameSessionStatusType;
 import com.example.redthreadgame.Enums.QuestionTargetType;
@@ -27,7 +25,6 @@ public class WitnessService {
     private final WitnessRepository witnessRepository;
     private final CaseService caseService;
     private final OpenAiService openAiService;
-    private final ElevenLabsService elevenLabsService;
     private final GameSessionRepository gameSessionRepository;
 
     public List<WitnessOut> getAllWitnesses() {
@@ -68,27 +65,6 @@ public class WitnessService {
         }
         return witnesses;
     }
-
-    //endpoint by mohammed
-    public VoiceAnswerOut askWitness(Integer witnessId, QuestionIn dto) {
-        Witness witness = checkWitness(witnessId);
-
-        String prompt = "Witness name: " + witness.getName()
-                + "\nWitness statement: " + witness.getStatement()
-                + "\nWitness gender: " + witness.getGender()
-                + "\nWitness voice tone: " + witness.getVoiceTone()
-                + "\nRules: Answer in English only. Match the witness voice tone naturally. Do not include stage directions, brackets, emotion labels, or sound effects."
-                + "\nPlayer question: " + dto.getQuestionText();
-
-        String answer = openAiService.generateAnswer(prompt);
-        if (answer == null || answer.isBlank()) {
-            answer = witness.getStatement();
-        }
-
-        String audioFileName = elevenLabsService.generateVoice(answer, witness.getGender(), witness.getVoiceTone());
-        return new VoiceAnswerOut(answer, audioFileName);
-    }
-
 
     public String confrontWitnesses(Integer witnessId1, Integer witnessId2, Integer gameSessionId) {
         GameSession gameSession = checkGameSession(gameSessionId);

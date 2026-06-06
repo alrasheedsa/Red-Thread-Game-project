@@ -2,12 +2,16 @@ package com.example.redthreadgame.Service;
 import com.example.redthreadgame.Api.ApiException;
 import com.example.redthreadgame.DTO.IN.NoteIn;
 import com.example.redthreadgame.DTO.OUT.NoteOut;
+import com.example.redthreadgame.Enums.GameSessionStatusType;
+import com.example.redthreadgame.Enums.SessionPlayerStatus;
 import com.example.redthreadgame.Model.GameSession;
 import com.example.redthreadgame.Model.Note;
 import com.example.redthreadgame.Model.Player;
+import com.example.redthreadgame.Model.SessionPlayer;
 import com.example.redthreadgame.Repository.GameSessionRepository;
 import com.example.redthreadgame.Repository.NoteRepository;
 import com.example.redthreadgame.Repository.PlayerRepository;
+import com.example.redthreadgame.Repository.SessionPlayerRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -21,6 +25,7 @@ public class NoteService {
     private final NoteRepository noteRepository;
     private final GameSessionRepository gameSessionRepository;
     private final PlayerRepository playerRepository;
+    private final SessionPlayerRepository sessionPlayerRepository;
     private final ModelMapper modelMapper;
 
     public List<NoteOut> getAllNotes() {
@@ -48,6 +53,8 @@ public class NoteService {
 
         Player player = playerRepository.findById(playerId)
                 .orElseThrow(() -> new ApiException("Player not found"));
+
+        checkCanWriteNote(gameSession, player);
 
         Note note = modelMapper.map(dto, Note.class);
         note.setGameSession(gameSession);
@@ -101,4 +108,13 @@ public class NoteService {
 
         return notes;
     }// Search only inside this session notes to help players find clues or suspect names
+
+    private void checkCanWriteNote(GameSession gameSession, Player player) {
+        if (gameSession.getStatus() != GameSessionStatusType.IN_PROGRESS)
+            throw new ApiException("Game session is not in progress");
+
+        SessionPlayer sessionPlayer = sessionPlayerRepository.findByGameSessionAndPlayer(gameSession, player);
+        if (sessionPlayer == null || sessionPlayer.getStatus() != SessionPlayerStatus.JOINED)
+            throw new ApiException("Player is not joined in this game session");
+    }
 }

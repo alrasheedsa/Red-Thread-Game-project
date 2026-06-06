@@ -1,9 +1,7 @@
 package com.example.redthreadgame.Controller;
 
 import com.example.redthreadgame.Api.ApiResponse;
-import com.example.redthreadgame.DTO.IN.QuestionIn;
 import com.example.redthreadgame.DTO.IN.SuspectIn;
-import com.example.redthreadgame.Service.OpenAiService;
 import com.example.redthreadgame.Service.SuspectService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
 public class SuspectController {
 
     private final SuspectService suspectService;
-    private final OpenAiService openAiService;
 
     @GetMapping("/get")
     public ResponseEntity<?> getAllSuspects() {
@@ -44,16 +41,6 @@ public class SuspectController {
     @GetMapping("/case/{caseId}")
     public ResponseEntity<?> getSuspectsDetails(@PathVariable Integer caseId) {
         return ResponseEntity.status(200).body(suspectService.getSuspectsDetails(caseId));
-    }
-
-    @PostMapping("/ask/{suspectId}")
-    public ResponseEntity<?> askSuspect(@PathVariable Integer suspectId, @RequestBody @Valid QuestionIn dto) {
-        return ResponseEntity.status(200).body(suspectService.askSuspect(suspectId, dto));
-    }
-    @PostMapping("/check/{gameSessionId}/{suspectId}")
-    public ResponseEntity<?> checkCorrectSuspect(@PathVariable Integer gameSessionId, @PathVariable Integer suspectId, @RequestBody @Valid SuspectIn dto) {
-        String result = suspectService.checkCorrectSuspect(gameSessionId, suspectId, dto.getReason());
-        return ResponseEntity.status(200).body(result);
     }
 
     @PostMapping("/confront/{suspectId}/{witnessId}/{gameSessionId}")

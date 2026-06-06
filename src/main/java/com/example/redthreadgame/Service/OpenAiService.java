@@ -205,15 +205,6 @@ public class OpenAiService {
         }
     }
 
-    // Legacy score calculator kept for older logic; current gameplay uses GameSession.score directly.
-    public Integer calculateScore(Integer questionCount, Integer hintCount) {
-        int baseScore = 100;
-        int questionPenalty = questionCount * 5;
-        int hintPenalty = hintCount * 10;
-        int finalScore = baseScore - questionPenalty - hintPenalty;
-        return Math.max(1, finalScore);
-    }
-
     // Keeps generated gender values limited to MALE or FEMALE before saving.
     private String normalizeGender(String gender) {
         if ("FEMALE".equalsIgnoreCase(gender))

@@ -1,9 +1,7 @@
 package com.example.redthreadgame.Service;
 
 import com.example.redthreadgame.Api.ApiException;
-import com.example.redthreadgame.DTO.IN.QuestionIn;
 import com.example.redthreadgame.DTO.IN.SuspectIn;
-import com.example.redthreadgame.DTO.OUT.VoiceAnswerOut;
 import com.example.redthreadgame.DTO.OUT.SuspectOut;
 import com.example.redthreadgame.Enums.GameSessionStatusType;
 import com.example.redthreadgame.Enums.QuestionTargetType;
@@ -25,7 +23,6 @@ public class SuspectService {
     private final SuspectRepository suspectRepository;
     private final CaseService caseService;
     private final OpenAiService openAiService;
-    private final ElevenLabsService elevenLabsService;
     private final GameSessionRepository gameSessionRepository;
     private final WitnessRepository witnessRepository;
 
@@ -64,60 +61,6 @@ public class SuspectService {
             suspects.add(modelMapper.map(s, SuspectOut.class));
         }
         return suspects;
-    }
-
-    //endpoint by mohammed
-    public VoiceAnswerOut askSuspect(Integer suspectId, QuestionIn dto) {
-        Suspect suspect = checkSuspect(suspectId);
-
-        String prompt = "Suspect name: " + suspect.getName()
-                + "\nSuspect age: " + suspect.getAge()
-                + "\nSuspect gender: " + suspect.getGender()
-                + "\nSuspect voice tone: " + suspect.getVoiceTone()
-                + "\nRules: Answer in English only. Match the suspect voice tone naturally. Do not include stage directions, brackets, emotion labels, or sound effects."
-                + "\nPlayer question: " + dto.getQuestionText();
-
-        String answer = openAiService.generateAnswer(prompt);
-        if (answer == null || answer.isBlank()) {
-            answer = "I do not have anything else to say right now.";
-        }
-
-        String audioFileName = elevenLabsService.generateVoice(answer, suspect.getGender(), suspect.getVoiceTone());
-        return new VoiceAnswerOut(answer, audioFileName);
-    }
-    public String checkCorrectSuspect(Integer gameSessionId, Integer suspectId, String playerReason) {
-        GameSession gameSession = gameSessionRepository.findGameSessionById(gameSessionId);
-        if (gameSession == null)
-            throw new ApiException("Game session not found");
-
-        CaseSolution caseSolution = gameSession.getSessionCase().getCaseSolution();
-        if (caseSolution == null)
-            throw new ApiException("Case solution not found");
-
-        Suspect suspect = checkSuspect(suspectId);
-
-        if (!suspect.getSuspectCase().getId().equals(gameSession.getSessionCase().getId()))
-            throw new ApiException("Suspect does not belong to this case");
-
-        String prompt = """
-            You are a mystery game judge analyzing a detective team's performance.
-            
-            Correct solution: %s
-            
-            Player accused: %s
-            Player reason: %s
-            
-            Respond in this exact JSON format:
-            {
-              "result": "You won! Great detective work!" or "You lost! Better luck next time!",
-              "analysis": "2-3 sentences analyzing how well the team played",
-              "focusOn": "1-2 specific areas to improve next time"
-            }
-            Return ONLY the JSON, no extra text.
-            """.formatted(caseSolution.getJustification(), suspect.getName(), playerReason);
-
-        String result = openAiService.generateAnswer(prompt);
-        return result.trim().replace("```json", "").replace("```", "").trim();
     }
 
     public String confrontSuspectWithWitness(Integer suspectId, Integer witnessId, Integer gameSessionId) {

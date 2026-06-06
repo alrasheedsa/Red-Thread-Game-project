@@ -2,7 +2,6 @@ package com.example.redthreadgame.Controller;
 
 
 import com.example.redthreadgame.Api.ApiResponse;
-import com.example.redthreadgame.DTO.IN.QuestionIn;
 import com.example.redthreadgame.DTO.IN.WitnessIn;
 import com.example.redthreadgame.Service.WitnessService;
 import jakarta.validation.Valid;
@@ -43,11 +42,6 @@ public class WitnessController {
      public ResponseEntity<?> getWitnessesDetails(@PathVariable Integer caseId) {
          return ResponseEntity.status(200).body(witnessService.getWitnessesDetails(caseId));
      }
-
-    @PostMapping("/ask/{witnessId}")
-    public ResponseEntity<?> askWitness(@PathVariable Integer witnessId, @RequestBody @Valid QuestionIn dto) {
-        return ResponseEntity.status(200).body(witnessService.askWitness(witnessId, dto));
-    }
 
     @PostMapping("/confront/{witnessId1}/{witnessId2}/{gameSessionId}")
     public ResponseEntity<?> confrontWitnesses(@PathVariable Integer witnessId1, @PathVariable Integer witnessId2, @PathVariable Integer gameSessionId) {
