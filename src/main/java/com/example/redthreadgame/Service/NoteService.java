@@ -41,17 +41,6 @@ public class NoteService {
 
         return notes;
     }
-    public List<NoteOut> getNotesByPlayer(Integer playerId) {
-        Player player = playerRepository.findById(playerId)
-                .orElseThrow(() -> new ApiException("Player not found"));
-
-        List<NoteOut> notes = new ArrayList<>();
-
-        for (Note n : noteRepository.findAllByPlayerId(playerId)) {
-            notes.add(modelMapper.map(n, NoteOut.class));
-        }
-        return notes;
-    }
 
     public void addNote(Integer gameSessionId, Integer playerId, NoteIn dto) {
         GameSession gameSession = gameSessionRepository.findById(gameSessionId)
@@ -65,7 +54,7 @@ public class NoteService {
         note.setPlayer(player);
 
         noteRepository.save(note);
-    }
+    }// Link the note to both the current game session and the player who wrote it
 
     public void updateNote(Integer noteId, NoteIn dto) {
         Note note = noteRepository.findById(noteId)
@@ -81,4 +70,35 @@ public class NoteService {
 
         noteRepository.delete(note);
     }
+    public List<NoteOut> getLatestNotesBySession(Integer gameSessionId) {
+        gameSessionRepository.findById(gameSessionId)
+                .orElseThrow(() -> new ApiException("Game session not found"));
+
+        List<NoteOut> notes = new ArrayList<>();
+
+        for (Note n : noteRepository.findAllByGameSessionId(gameSessionId)) {
+            notes.add(modelMapper.map(n, NoteOut.class));
+        }
+
+        notes.sort((n1, n2) -> n2.getId().compareTo(n1.getId()));
+        return notes;
+    }// Return session notes from newest to oldest so player can quickly review recent investigation updates
+
+    public List<NoteOut> searchNotesBySession(Integer gameSessionId, String keyword) {
+        gameSessionRepository.findById(gameSessionId)
+                .orElseThrow(() -> new ApiException("Game session not found"));
+
+        if (keyword == null || keyword.isBlank())
+            throw new ApiException("Keyword is required");
+
+        List<NoteOut> notes = new ArrayList<>();
+
+        for (Note n : noteRepository.findAllByGameSessionId(gameSessionId)) {
+            if (n.getContent().toLowerCase().contains(keyword.toLowerCase())) {
+                notes.add(modelMapper.map(n, NoteOut.class));
+            }
+        }
+
+        return notes;
+    }// Search only inside this session notes to help players find clues or suspect names
 }

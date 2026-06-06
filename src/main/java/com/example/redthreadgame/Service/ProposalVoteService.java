@@ -54,16 +54,6 @@ public class ProposalVoteService {
         return votes;
     }
 
-    public List<ProposalVoteOut> getVotesByPlayer(Integer playerId) {
-        List<ProposalVoteOut> votes = new ArrayList<>();
-
-        for (ProposalVote p : proposalVoteRepository.findAllByPlayerId(playerId)) {
-            votes.add(modelMapper.map(p, ProposalVoteOut.class));
-        }
-
-        return votes;
-    }
-
     public void addProposalVote(Integer proposalId, Integer playerId, ProposalVoteIn dto) {
         SolutionProposal proposal = solutionProposalRepository.findById(proposalId)
                 .orElseThrow(() -> new ApiException("Solution proposal not found"));
@@ -91,53 +81,7 @@ public class ProposalVoteService {
 
         if (proposal.getStatus() == SolutionProposalStatusType.ACCEPTED_BY_PLAYERS)
             solutionProposalService.evaluateProposal(proposal.getId());
-    }
-
-    public void updateProposalVote(Integer voteId, ProposalVoteIn dto) {
-        ProposalVote proposalVote = checkProposalVote(voteId);
-        ProposalVoteType newVote = parseVote(dto.getVote());
-        ProposalVoteType oldVote = proposalVote.getVote();
-
-        if (oldVote != newVote) {
-            updateProposalVoteCount(proposalVote.getSolutionProposal(), oldVote, -1);
-            updateProposalVoteCount(proposalVote.getSolutionProposal(), newVote, 1);
-        }
-
-        proposalVote.setVote(newVote);
-        updateProposalStatusByMajority(proposalVote.getSolutionProposal());
-        proposalVoteRepository.save(proposalVote);
-        solutionProposalRepository.save(proposalVote.getSolutionProposal());
-    }
-
-    public void deleteProposalVote(Integer voteId) {
-        ProposalVote proposalVote = checkProposalVote(voteId);
-        SolutionProposal proposal = proposalVote.getSolutionProposal();
-
-        updateProposalVoteCount(proposal, proposalVote.getVote(), -1);
-        proposalVoteRepository.delete(proposalVote);
-        solutionProposalRepository.save(proposal);
-    }
-    public Boolean hasMajorityAccepted(Integer proposalId) {
-        SolutionProposal proposal = solutionProposalRepository.findById(proposalId)
-                .orElseThrow(() -> new ApiException("Solution proposal not found"));
-
-        Integer requiredVotes = getRequiredVotes(proposal);
-        return proposal.getAcceptCount() >= requiredVotes;
-    }
-
-    public Boolean hasMajorityRejected(Integer proposalId) {
-        SolutionProposal proposal = solutionProposalRepository.findById(proposalId)
-                .orElseThrow(() -> new ApiException("Solution proposal not found"));
-
-        Integer requiredVotes = getRequiredVotes(proposal);
-        return proposal.getRejectCount() >= requiredVotes;
-    }
-
-    private ProposalVote checkProposalVote(Integer id) {
-        ProposalVote proposalVote = proposalVoteRepository.findProposalVoteById(id);
-        if (proposalVote == null) throw new ApiException("Proposal vote not found");
-        return proposalVote;
-    }
+    }// Save player vote, updates proposal count, automatically evaluate the proposal when enough players accept
 
     private ProposalVoteType parseVote(String vote) {
         try {
@@ -168,7 +112,7 @@ public class ProposalVoteService {
 
         if (proposal.getStatus() != SolutionProposalStatusType.PENDING)
             throw new ApiException("You cannot vote on this proposal");
-    }
+    }//wrong session state, nonjoined player, proposal owner voting, repeated or closed proposal voting
 
     private void updateProposalStatusByMajority(SolutionProposal proposal) {
         Integer requiredVotes = getRequiredVotes(proposal);
@@ -176,9 +120,9 @@ public class ProposalVoteService {
             proposal.setStatus(SolutionProposalStatusType.ACCEPTED_BY_PLAYERS);
         else if (proposal.getRejectCount() >= requiredVotes)
             proposal.setStatus(SolutionProposalStatusType.REJECTED_BY_PLAYERS);
-    }
+    }// Mark the proposal accepted or rejected once votes reach half of the session players or more
 
     private Integer getRequiredVotes(SolutionProposal proposal) {
         return (int) Math.ceil(proposal.getGameSession().getPlayersCount() / 2.0);
-    }
+    }// Calculate how many votes are needed half of the session players rounded up
 }

@@ -31,10 +31,12 @@ public class ElevenLabsService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
+    // Fallback voice generation for old calls that do not provide gender or tone.
     public String generateVoice(String text) {
         return generateVoice(text, "MALE", "CALM");
     }
 
+    // Generates an audio file from text using the selected gender voice and tone settings.
     public String generateVoice(String text, String gender, String voiceTone) {
         try {
             if (apiKey == null || apiKey.isBlank()) {
@@ -83,6 +85,7 @@ public class ElevenLabsService {
         }
     }
 
+    // Chooses the ElevenLabs voice id based on the character gender.
     private String resolveVoiceId(String gender) {
         if ("FEMALE".equalsIgnoreCase(gender)) {
             return femaleVoiceId;
@@ -90,6 +93,7 @@ public class ElevenLabsService {
         return maleVoiceId;
     }
 
+    // Controls how stable or expressive the voice should be for each tone.
     private Double getStability(String voiceTone) {
         if ("NERVOUS".equalsIgnoreCase(voiceTone)) return 0.30;
         if ("DEFENSIVE".equalsIgnoreCase(voiceTone)) return 0.40;
@@ -99,6 +103,7 @@ public class ElevenLabsService {
         return 0.55;
     }
 
+    // Controls how strongly ElevenLabs should apply style and emotion to the voice.
     private Double getStyleExaggeration(String voiceTone) {
         if ("NERVOUS".equalsIgnoreCase(voiceTone)) return 0.65;
         if ("DEFENSIVE".equalsIgnoreCase(voiceTone)) return 0.55;

@@ -68,49 +68,8 @@ public class SolutionProposalService {
         proposal.setSuspect(suspect);
 
         solutionProposalRepository.save(proposal);
-    }
+    }// Creates a pending solution proposal after validating the session, player, and accused suspect.
 
-    public void acceptProposal(Integer proposalId) {
-        throw new ApiException("Use proposal vote endpoint instead");
-    }
-
-    public void rejectProposal(Integer proposalId) {
-        throw new ApiException("Use proposal vote endpoint instead");
-    }
-
-    public void changeStatus(Integer proposalId, String status) {
-        SolutionProposal proposal = solutionProposalRepository.findById(proposalId)
-                .orElseThrow(() -> new ApiException("Solution proposal not found"));
-
-        proposal.setStatus(SolutionProposalStatusType.valueOf(status));
-        solutionProposalRepository.save(proposal);
-    }
-
-    public List<SolutionProposalOut> getProposalsByPlayer(Integer playerId) {
-        List<SolutionProposalOut> proposals = new ArrayList<>();
-
-        for (SolutionProposal s : solutionProposalRepository.findAllByPlayerId(playerId)) {
-            proposals.add(modelMapper.map(s, SolutionProposalOut.class));
-        }
-
-        return proposals;
-    }
-
-    public void markProposalCorrect(Integer proposalId) {
-        SolutionProposal proposal = solutionProposalRepository.findById(proposalId)
-                .orElseThrow(() -> new ApiException("Solution proposal not found"));
-
-        proposal.setStatus(SolutionProposalStatusType.CORRECT);
-        solutionProposalRepository.save(proposal);
-    }
-
-    public void markProposalWrong(Integer proposalId) {
-        SolutionProposal proposal = solutionProposalRepository.findById(proposalId)
-                .orElseThrow(() -> new ApiException("Solution proposal not found"));
-
-        proposal.setStatus(SolutionProposalStatusType.WRONG);
-        solutionProposalRepository.save(proposal);
-    }
     public Integer evaluateProposal(Integer proposalId) {
         SolutionProposal proposal = solutionProposalRepository.findById(proposalId)
                 .orElseThrow(() -> new ApiException("Solution proposal not found"));
@@ -172,7 +131,7 @@ public class SolutionProposalService {
         solutionProposalRepository.save(proposal);
         notifyPlayersCorrectSolution(gameSession, proposal, totalScore, playerScore, joinedPlayers);
         return totalScore;
-    }
+    }// After vote approval, asks AI to judge the proposal, completes the session, updates scores, and sends result emails.
 
     private void checkCanPlay(GameSession gameSession, Player player) {
         if (gameSession.getStatus() != GameSessionStatusType.IN_PROGRESS)
@@ -200,7 +159,7 @@ public class SolutionProposalService {
                             "Red Thread Game Team"
             );
         }
-    }
+    }// Sends the win result and each player's earned score to all joined players.
 
     private void notifyPlayersWrongSolution(GameSession gameSession, SolutionProposal proposal, List<SessionPlayer> joinedPlayers) {
         for (SessionPlayer s : joinedPlayers) {
@@ -219,5 +178,32 @@ public class SolutionProposalService {
                             "Red Thread Game Team"
             );
         }
-    }
+    }// Sends the loss result to all joined players when the proposed solution is incorrect.
+
+    public SolutionProposalOut getActiveProposalBySession(Integer gameSessionId) {
+        gameSessionRepository.findById(gameSessionId)
+                .orElseThrow(() -> new ApiException("Game session not found"));
+
+        for (SolutionProposal s : solutionProposalRepository.findAllByGameSessionId(gameSessionId)) {
+            if (s.getStatus() == SolutionProposalStatusType.PENDING) {
+                return modelMapper.map(s, SolutionProposalOut.class);
+            }
+        }
+
+        throw new ApiException("No active proposal found");
+    }// Find the current pending proposal that players still need to vote on
+
+    public SolutionProposalOut getLastProposalResultBySession(Integer gameSessionId) {
+        gameSessionRepository.findById(gameSessionId)
+                .orElseThrow(() -> new ApiException("Game session not found"));
+
+        List<SolutionProposal> proposals = solutionProposalRepository.findAllByGameSessionId(gameSessionId);
+
+        if (proposals.isEmpty())
+            throw new ApiException("No proposals found");
+
+        proposals.sort((p1, p2) -> p2.getId().compareTo(p1.getId()));
+
+        return modelMapper.map(proposals.get(0), SolutionProposalOut.class);
+    }// Return the latest proposal result for reviewing the final or most recent team accusation
 }

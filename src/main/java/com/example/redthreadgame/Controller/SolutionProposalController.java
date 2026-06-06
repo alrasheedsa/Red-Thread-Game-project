@@ -25,42 +25,12 @@ public class SolutionProposalController {
         solutionProposalService.submitProposal(gameSessionId, playerId, suspectId, dto);
         return ResponseEntity.status(200).body(new ApiResponse("Solution proposal submitted successfully"));
     }
-
-    @PutMapping("/accept/{proposalId}")
-    public ResponseEntity<?> acceptProposal(@PathVariable Integer proposalId) {
-        solutionProposalService.acceptProposal(proposalId);
-        return ResponseEntity.status(200).body(new ApiResponse("Solution proposal accepted successfully"));
+    @GetMapping("/active/{gameSessionId}")
+    public ResponseEntity<?> getActiveProposalBySession(@PathVariable Integer gameSessionId) {
+        return ResponseEntity.status(200).body(solutionProposalService.getActiveProposalBySession(gameSessionId));
     }
-
-    @PutMapping("/reject/{proposalId}")
-    public ResponseEntity<?> rejectProposal(@PathVariable Integer proposalId) {
-        solutionProposalService.rejectProposal(proposalId);
-        return ResponseEntity.status(200).body(new ApiResponse("Solution proposal rejected successfully"));
-    }
-
-    @PutMapping("/status/{proposalId}")
-    public ResponseEntity<?> changeStatus(@PathVariable Integer proposalId, @RequestParam String status) {
-        solutionProposalService.changeStatus(proposalId, status);
-        return ResponseEntity.status(200).body(new ApiResponse("Solution proposal status changed successfully"));
-    }
-    @GetMapping("/player/{playerId}")
-    public ResponseEntity<?> getProposalsByPlayer(@PathVariable Integer playerId) {
-        return ResponseEntity.status(200).body(solutionProposalService.getProposalsByPlayer(playerId));
-    }
-
-    @PutMapping("/correct/{proposalId}")
-    public ResponseEntity<?> markProposalCorrect(@PathVariable Integer proposalId) {
-        solutionProposalService.markProposalCorrect(proposalId);
-        return ResponseEntity.status(200).body(new ApiResponse("Solution proposal marked correct successfully"));
-    }
-
-    @PutMapping("/wrong/{proposalId}")
-    public ResponseEntity<?> markProposalWrong(@PathVariable Integer proposalId) {
-        solutionProposalService.markProposalWrong(proposalId);
-        return ResponseEntity.status(200).body(new ApiResponse("Solution proposal marked wrong successfully"));
-    }//delete
-    @PutMapping("/evaluate/{proposalId}")
-    public ResponseEntity<?> evaluateProposal(@PathVariable Integer proposalId) {
-        return ResponseEntity.status(200).body(solutionProposalService.evaluateProposal(proposalId));
+    @GetMapping("/result/{gameSessionId}")
+    public ResponseEntity<?> getLastProposalResultBySession(@PathVariable Integer gameSessionId) {
+        return ResponseEntity.status(200).body(solutionProposalService.getLastProposalResultBySession(gameSessionId));
     }
 }

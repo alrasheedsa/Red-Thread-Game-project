@@ -23,11 +23,6 @@ public class NoteController {
         return ResponseEntity.status(200).body(noteService.getAllNotes());
     }
 
-    @GetMapping("/get-by-session/{gameSessionId}")
-    public ResponseEntity<?> getNotesByGameSession(@PathVariable Integer gameSessionId) {
-        return ResponseEntity.status(200).body(noteService.getNotesByGameSession(gameSessionId));
-    }
-
     @PostMapping("/add/{gameSessionId}/{playerId}")
     public ResponseEntity<?> addNote(@PathVariable Integer gameSessionId, @PathVariable Integer playerId, @RequestBody @Valid NoteIn dto) {
         noteService.addNote(gameSessionId, playerId, dto);
@@ -45,8 +40,18 @@ public class NoteController {
         noteService.deleteNote(noteId);
         return ResponseEntity.status(200).body(new ApiResponse("Note deleted successfully"));
     }
-    @GetMapping("/player/{playerId}")
-    public ResponseEntity<?> getPlayerNotes(@PathVariable Integer playerId) {
-        return ResponseEntity.status(200).body(noteService.getNotesByPlayer(playerId));
+
+    @GetMapping("/get-by-session/{gameSessionId}")
+    public ResponseEntity<?> getNotesByGameSession(@PathVariable Integer gameSessionId) {
+        return ResponseEntity.status(200).body(noteService.getNotesByGameSession(gameSessionId));
+    }
+
+    @GetMapping("/latest/{gameSessionId}")
+    public ResponseEntity<?> getLatestNotesBySession(@PathVariable Integer gameSessionId) {
+        return ResponseEntity.status(200).body(noteService.getLatestNotesBySession(gameSessionId));
+    }
+    @GetMapping("/search/{gameSessionId}")
+    public ResponseEntity<?> searchNotesBySession(@PathVariable Integer gameSessionId, @RequestParam String keyword) {
+        return ResponseEntity.status(200).body(noteService.searchNotesBySession(gameSessionId, keyword));
     }
 }

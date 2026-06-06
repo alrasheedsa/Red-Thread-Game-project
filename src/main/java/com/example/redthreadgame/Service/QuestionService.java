@@ -51,16 +51,6 @@ public class QuestionService {
         return questions;
     }
 
-    public List<QuestionOut> getQuestionsByPlayer(Integer playerId) {
-        List<QuestionOut> questions = new ArrayList<>();
-
-        for (Question q : questionRepository.findAllByPlayerId(playerId)) {
-            questions.add(modelMapper.map(q, QuestionOut.class));
-        }
-
-        return questions;
-    }
-
     public VoiceAnswerOut askWitnessQuestion(Integer gameSessionId, Integer playerId, Integer witnessId, QuestionIn dto) {
         GameSession gameSession = checkGameSession(gameSessionId);
         Player player = checkPlayer(playerId);
@@ -141,7 +131,7 @@ public class QuestionService {
         questionRepository.save(question);
         deductQuestionScoreIfNeeded(gameSession);
         return new VoiceAnswerOut(answer, audioFileName);
-    }
+    }// Build the witness prompt, generates AI answer and voice, saves the question, then updates session question penalty
 
     public VoiceAnswerOut askSuspectQuestion(Integer gameSessionId, Integer playerId, Integer suspectId, QuestionIn dto) {
         GameSession gameSession = checkGameSession(gameSessionId);
@@ -221,46 +211,23 @@ public class QuestionService {
         questionRepository.save(question);
         deductQuestionScoreIfNeeded(gameSession);
         return new VoiceAnswerOut(answer, audioFileName);
+    }// Build the suspect prompt, generates AI answer and voice, saves the question, then updates session question penalty
+
+    public Integer getQuestionsCountBySession(Integer gameSessionId) {
+        checkGameSession(gameSessionId);
+        return questionRepository.findAllByGameSessionId(gameSessionId).size();
     }
+    public Integer getNextQuestionPenalty(Integer gameSessionId) {
+        checkGameSession(gameSessionId);
 
-    public void updateQuestion(Integer questionId, QuestionIn dto) {
-        Question question = checkQuestion(questionId);
+        Integer questionsCount = questionRepository.findAllByGameSessionId(gameSessionId).size();
 
-        question.setQuestionText(dto.getQuestionText());
-        question.setAnswerText(dto.getAnswerText());
-        question.setVoiceUrl(dto.getVoiceUrl());
+        if (questionsCount < 2)
+            return 0;
 
-        questionRepository.save(question);
-    }
+        return 2;
+    }// Show whether the next team question is free or will deduct points
 
-    public void deleteQuestion(Integer questionId) {
-        Question question = checkQuestion(questionId);
-        questionRepository.delete(question);
-    }
-
-    public List<QuestionOut> getQuestionsByWitnessId(Integer witnessId) {
-        List<QuestionOut> questions = new ArrayList<>();
-
-        for(Question q : questionRepository.findAllByWitnessId(witnessId)) {
-            questions.add(modelMapper.map(q, QuestionOut.class));
-        }
-        return  questions;
-    }
-
-    public List<QuestionOut> getQuestionsBySuspectId(Integer suspectId) {
-        List<QuestionOut> questions = new ArrayList<>();
-        for(Question q : questionRepository.findAllBySuspectId(suspectId)) {
-            questions.add(modelMapper.map(q, QuestionOut.class));
-        }
-        return questions;
-    }
-
-
-    private Question checkQuestion(Integer id) {
-        Question question = questionRepository.findQuestionById(id);
-        if (question == null) throw new ApiException("Question not found");
-        return question;
-    }
 
     private GameSession checkGameSession(Integer id) {
         GameSession gameSession = gameSessionRepository.findGameSessionById(id);
@@ -307,7 +274,7 @@ public class QuestionService {
         }
 
         gameSessionRepository.save(gameSession);
-    }
+    }// Keeps the first two team questions free, then deducts points from the shared session score.
 
     private String buildWitnessesText(Case sessionCase) {
         String text = "";

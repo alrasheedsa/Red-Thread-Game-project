@@ -37,18 +37,6 @@ public class HintService {
 
         return hints;
     }
-
-    public void addHint(Integer gameSessionId, HintIn dto) {
-        GameSession gameSession = gameSessionRepository.findById(gameSessionId)
-                .orElseThrow(() -> new ApiException("Game session not found"));
-
-        Hint hint = modelMapper.map(dto, Hint.class);
-        hint.setDeductedPoints(5);
-        hint.setGameSession(gameSession);
-
-        hintRepository.save(hint);
-    }
-
     public HintOut requestHint(Integer gameSessionId, Integer playerId) {
         GameSession gameSession = gameSessionRepository.findById(gameSessionId)
                 .orElseThrow(() -> new ApiException("Game session not found"));
@@ -56,7 +44,7 @@ public class HintService {
         Player player = playerRepository.findById(playerId)
                 .orElseThrow(() -> new ApiException("Player not found"));
 
-        checkCanPlay(gameSession, player);
+        checkCanPlay(gameSession, player);//check if player in joined and game session in progress
 
         Case sessionCase = gameSession.getSessionCase();
         String prompt = """
@@ -109,33 +97,7 @@ public class HintService {
         hintRepository.save(hint);
         deductHintScoreIfNeeded(gameSession, deductedPoints);
         return modelMapper.map(hint, HintOut.class);
-    }
-
-    public List<HintOut> getHintsByPlayer(Integer playerId) {
-        playerRepository.findById(playerId)
-                .orElseThrow(() -> new ApiException("Player not found"));
-
-        List<HintOut> hints = new ArrayList<>();
-
-        for (Hint h : hintRepository.findAllByPlayerId(playerId)) {
-            hints.add(modelMapper.map(h, HintOut.class));
-        }
-
-        return hints;
-    }
-
-    public Integer calculateHintPenalty(Integer gameSessionId) {
-        gameSessionRepository.findById(gameSessionId)
-                .orElseThrow(() -> new ApiException("Game session not found"));
-
-        Integer totalPenalty = 0;
-        for (Hint h : hintRepository.findAllByGameSessionId(gameSessionId)) {
-            if (h.getDeductedPoints() != null)
-                totalPenalty += h.getDeductedPoints();
-        }
-
-        return totalPenalty;
-    }
+    }// Generates AI hint based on the current case, saves it, and deduct session score after the free hint is used
 
     public Integer calculateTotalScore(Integer gameSessionId) {
         GameSession gameSession = gameSessionRepository.findById(gameSessionId)
@@ -143,13 +105,23 @@ public class HintService {
 
         return gameSession.getScore();
     }
+    public Integer getHintsCountBySession(Integer gameSessionId) {
+        gameSessionRepository.findById(gameSessionId)
+                .orElseThrow(() -> new ApiException("Game session not found"));
 
-    public void deleteHint(Integer hintId) {
-        Hint hint = hintRepository.findById(hintId)
-                .orElseThrow(() -> new ApiException("Hint not found"));
-
-        hintRepository.delete(hint);
+        return hintRepository.findAllByGameSessionId(gameSessionId).size();
     }
+    public Integer getNextHintPenalty(Integer gameSessionId) {
+        gameSessionRepository.findById(gameSessionId)
+                .orElseThrow(() -> new ApiException("Game session not found"));
+
+        Integer hintsCount = hintRepository.findAllByGameSessionId(gameSessionId).size();
+
+        if (hintsCount == 0)
+            return 0;
+
+        return 3;
+    }// Show the penalty that will be applied if the team request another hint now
 
     private void checkCanPlay(GameSession gameSession, Player player) {
         if (gameSession.getStatus() != GameSessionStatusType.IN_PROGRESS)
@@ -158,14 +130,14 @@ public class HintService {
         SessionPlayer sessionPlayer = sessionPlayerRepository.findByGameSessionAndPlayer(gameSession, player);
         if (sessionPlayer == null || sessionPlayer.getStatus() != SessionPlayerStatus.JOINED)
             throw new ApiException("Player is not joined in this game session");
-    }
+    }// Allow hint request only while the session is in progress and the player is joined
 
     private void deductHintScoreIfNeeded(GameSession gameSession, Integer deductedPoints) {
         if (deductedPoints > 0) {
             gameSession.setScore(Math.max(0, gameSession.getScore() - deductedPoints));
             gameSessionRepository.save(gameSession);
         }
-    }
+    }// Deduct hint penalty from the shared session score without allowing it to go below zero
 
     private String buildWitnessesText(Case sessionCase) {
         String text = "";
