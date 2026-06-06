@@ -1,5 +1,6 @@
 package com.example.redthreadgame.Repository;
 
+import com.example.redthreadgame.Enums.GameSessionStatusType;
 import com.example.redthreadgame.Model.GameSession;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -16,4 +17,8 @@ public interface GameSessionRepository extends JpaRepository<GameSession, Intege
     boolean existsBySessionCode(String sessionCode);
 
     List<GameSession> findAllByIsPrivateFalse();
+
+    List<GameSession> findAllByStatus(GameSessionStatusType status);
+
+    List<GameSession> findAllByIsPrivateFalseAndSessionCaseIdAndStatus(Integer caseId, GameSessionStatusType status);
 }

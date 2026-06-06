@@ -26,6 +26,7 @@ public class PlayerService {
     private final PlayerRepository playerRepository;
     private final InvitationRepository invitationRepository;
     private final SessionPlayerRepository sessionPlayerRepository;
+    private final OpenAiService openAiService;
 
 
     //BASIC CRUD
@@ -78,6 +79,33 @@ public class PlayerService {
             gameSessions.add(modelMapper.map(s.getGameSession(), GameSessionOut.class));
         }
         return gameSessions;
+    }
+
+    public String getPlayerAnalysis(Integer playerId) {
+        Player player = checkPlayer(playerId);
+        List<SessionPlayer> sessionPlayers = sessionPlayerRepository.findAllByPlayerId(playerId);
+
+        StringBuilder prompt = new StringBuilder();
+        prompt.append("Analyze this player's performance and give a short personal report with strengths, weaknesses, and recommendations:\n\n");
+        prompt.append("Player: ").append(player.getName()).append("\n");
+        prompt.append("Games Played: ").append(sessionPlayers.size()).append("\n");
+        prompt.append("Cases:\n");
+
+        for(SessionPlayer sp : sessionPlayers){
+            prompt.append("- ").append(sp.getGameSession().getSessionCase().getTitle())
+                    .append(" | Status: ").append(sp.getGameSession().getStatus())
+                    .append(" | Role: ").append(sp.getRole()).append("\n");
+        }
+
+        return openAiService.analyzePlayer(prompt.toString());
+    }
+
+    public List<PlayerOut> getLeaderboard(){
+        List<PlayerOut> players = new ArrayList<>();
+        for(Player p: playerRepository.findAllByOrderByScoreDesc()){
+            players.add(modelMapper.map(p, PlayerOut.class));
+        }
+        return players;
     }
 
 

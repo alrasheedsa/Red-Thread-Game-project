@@ -41,12 +41,6 @@ public class GameSessionController {
 
 
     //ِِEXTRA ENDPOINTS
-    @PutMapping("/update-status/{id}")
-    public ResponseEntity<?> updateStatus(@PathVariable Integer id){
-        gameSessionService.updateStatus(id);
-        return ResponseEntity.status(200).body(new ApiResponse("Game Session status updated successfully"));
-    }
-
     @GetMapping("/public")
     public ResponseEntity<?> getPublicGameSessions(){
         return ResponseEntity.status(200).body(gameSessionService.getPublicGameSessions());
@@ -79,5 +73,15 @@ public class GameSessionController {
     @GetMapping("/lobby/{gameSessionId}")
     public ResponseEntity<?> getLobby(@PathVariable Integer gameSessionId){
         return ResponseEntity.status(200).body(gameSessionService.getLobby(gameSessionId));
+    }
+
+    @GetMapping("/pending")
+    public ResponseEntity<?> getPendingGameSessions(){
+        return ResponseEntity.status(200).body(gameSessionService.getPendingGameSessions());
+    }
+
+    @GetMapping("/public/case/{caseId}")
+    public ResponseEntity<?> getPublicGameSessionsByCase(@PathVariable Integer caseId){
+        return ResponseEntity.status(200).body(gameSessionService.getPublicGameSessionsByCase(caseId));
     }
 }

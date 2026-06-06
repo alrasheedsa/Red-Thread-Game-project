@@ -122,21 +122,19 @@ public class InvitationService {
         return player;
     }
 
-    private void notifyOwnerRejection(Player player, Integer gameSessionId){
+    private void notifyOwnerRejection(Player player, Integer gameSessionId) {
         GameSession gameSession = checkGameSession(gameSessionId);
+
         emailService.send(
                 gameSession.getOwner().getEmail(),
-                "Invitation Rejected - Game Session #" + gameSessionId,
-                "Dear " + gameSession.getOwner().getName() + ",\n\n" +
-                        "Player " + player.getName() + " has rejected your invitation for game session #" + gameSessionId + ".\n\n" +
-                        "Player Details:\n" +
-                        "- Name: " + player.getName() + "\n" +
-                        "- Username: " + player.getUsername() + "\n" +
-                        "- Email: " + player.getEmail() + "\n\n" +
-                        "Best regards,\n" +
-                        "Red Thread Game System"
+                "🚨 Detective Unavailable",
+                "Chief Detective " + gameSession.getOwner().getName() + ",\n\n" +
+                        "A detective has declined the assignment for your investigation. 📂\n\n" +
+                        "👤 Detective:\n" +
+                        "📛 " + player.getName() + "\n" +
+                        "🏷️ " + player.getUsername() + "\n\n" +
+                        "The investigation can still proceed, but you may recruit another detective to strengthen your team. 🔍\n\n" +
+                        "🧵 Red Thread Team"
         );
     }
-
-
 }

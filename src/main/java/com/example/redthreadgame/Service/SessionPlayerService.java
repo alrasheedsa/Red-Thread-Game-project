@@ -34,7 +34,7 @@ public class SessionPlayerService {
 
 
     //EXTRA ENDPOINTS
-    public List<SessionPlayerOut> getSessionPlayersByGameSession(Integer gameSessionId) {
+    public List<SessionPlayerOut> getSessionMembers(Integer gameSessionId) {
         List<SessionPlayerOut> sessionPlayers = new ArrayList<>();
         for (SessionPlayer s : sessionPlayerRepository.findAllByGameSessionId(gameSessionId)) {
             sessionPlayers.add(modelMapper.map(s, SessionPlayerOut.class));
@@ -42,7 +42,7 @@ public class SessionPlayerService {
         return sessionPlayers;
     }
 
-    public List<SessionPlayerOut> getSessionPlayersByPlayer(Integer playerId) {
+    public List<SessionPlayerOut> getPlayerSessionHistory(Integer playerId) {
         List<SessionPlayerOut> sessionPlayers = new ArrayList<>();
         for (SessionPlayer s : sessionPlayerRepository.findAllByPlayerId(playerId)) {
             sessionPlayers.add(modelMapper.map(s, SessionPlayerOut.class));

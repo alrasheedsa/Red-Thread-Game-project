@@ -39,6 +39,7 @@ public class PlayerController {
         return ResponseEntity.status(200).body(new ApiResponse("Player deleted successfully"));
     }
 
+
     //EXTRA ENDPOINTS
     @GetMapping("/my-invitations/{playerId}")
     public ResponseEntity<?> getMyInvitations(@PathVariable Integer playerId){
@@ -48,5 +49,15 @@ public class PlayerController {
     @GetMapping("/my-sessions/{playerId}")
     public ResponseEntity<?> getMyGameSessions(@PathVariable Integer playerId){
         return ResponseEntity.status(200).body(playerService.getMyGameSessions(playerId));
+    }
+
+    @GetMapping("/analysis/{playerId}")
+    public ResponseEntity<?> getPlayerAnalysis(@PathVariable Integer playerId){
+        return ResponseEntity.status(200).body(playerService.getPlayerAnalysis(playerId));
+    }
+
+    @GetMapping("/leaderboard")
+    public ResponseEntity<?> getLeaderboard(){
+        return ResponseEntity.status(200).body(playerService.getLeaderboard());
     }
 }

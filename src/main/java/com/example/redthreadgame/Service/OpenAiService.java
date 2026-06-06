@@ -271,4 +271,31 @@ public class OpenAiService {
 
         return defaultTone;
     }
+
+    public String analyzePlayer(String prompt) {
+        String response = WebClient.builder()
+                .baseUrl("https://api.openai.com")
+                .build()
+                .post()
+                .uri("/v1/chat/completions")
+                .header("Authorization", "Bearer " + openAiApiKey)
+                .header("Content-Type", "application/json")
+                .bodyValue("""
+                    {
+                      "model": "gpt-4o-mini",
+                      "messages": [{"role": "user", "content": "%s"}],
+                      "temperature": 0.7
+                    }
+                    """.formatted(prompt.replace("\"", "\\\"").replace("\n", "\\n")))
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
+
+        try {
+            JsonNode root = objectMapper.readTree(response);
+            return root.path("choices").get(0).path("message").path("content").asText();
+        } catch (Exception e) {
+            throw new ApiException("Failed to generate player analysis: " + e.getMessage());
+        }
+    }
     }

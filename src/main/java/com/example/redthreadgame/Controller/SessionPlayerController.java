@@ -1,9 +1,7 @@
 package com.example.redthreadgame.Controller;
 
 import com.example.redthreadgame.Api.ApiResponse;
-import com.example.redthreadgame.DTO.IN.SessionPlayerIn;
 import com.example.redthreadgame.Service.SessionPlayerService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,13 +27,13 @@ public class SessionPlayerController {
 
 
     //EXTRA ENDPOINTS
-    @GetMapping("/get-by-session/{gameSessionId}")
-    public ResponseEntity<?> getSessionPlayersByGameSession(@PathVariable Integer gameSessionId) {
-        return ResponseEntity.status(200).body(sessionPlayerService.getSessionPlayersByGameSession(gameSessionId));
+    @GetMapping("/session-members/{gameSessionId}")
+    public ResponseEntity<?> getSessionMembers(@PathVariable Integer gameSessionId) {
+        return ResponseEntity.status(200).body(sessionPlayerService.getSessionMembers(gameSessionId));
     }
 
-    @GetMapping("/get-by-player/{playerId}")
-    public ResponseEntity<?> getSessionPlayersByPlayer(@PathVariable Integer playerId) {
-        return ResponseEntity.status(200).body(sessionPlayerService.getSessionPlayersByPlayer(playerId));
+    @GetMapping("/player-history/{playerId}")
+    public ResponseEntity<?> getPlayerSessionHistory(@PathVariable Integer playerId) {
+        return ResponseEntity.status(200).body(sessionPlayerService.getPlayerSessionHistory(playerId));
     }
 }

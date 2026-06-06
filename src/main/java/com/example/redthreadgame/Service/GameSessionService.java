@@ -77,17 +77,6 @@ public class GameSessionService {
 
 
     //EXTRA ENDPOINTS
-    public void updateStatus(Integer id){
-        GameSession gameSession = checkGameSession(id);
-        if(gameSession.getStatus() == PENDING )
-            gameSession.setStatus(IN_PROGRESS);
-        else if(gameSession.getStatus() == IN_PROGRESS)
-            gameSession.setStatus(COMPLETED);
-        else throw new ApiException("game session is completed you cannot change the status");
-
-        gameSessionRepository.save(gameSession);
-    }
-
     public List<GameSessionOut> getPublicGameSessions(){
         List<GameSessionOut> gameSessions = new ArrayList<>();
         for(GameSession g: gameSessionRepository.findAllByIsPrivateFalse()){
@@ -174,6 +163,22 @@ public class GameSessionService {
     public GameSessionOut getLobby(Integer gameSessionId){
         GameSession gameSession = checkGameSession(gameSessionId);
         return modelMapper.map(gameSession, GameSessionOut.class);
+    }
+
+    public List<GameSessionOut> getPendingGameSessions(){
+        List<GameSessionOut> gameSessions = new ArrayList<>();
+        for(GameSession g: gameSessionRepository.findAllByStatus(PENDING)){
+            gameSessions.add(modelMapper.map(g, GameSessionOut.class));
+        }
+        return gameSessions;
+    }
+
+    public List<GameSessionOut> getPublicGameSessionsByCase(Integer caseId){
+        List<GameSessionOut> gameSessions = new ArrayList<>();
+        for(GameSession g: gameSessionRepository.findAllByIsPrivateFalseAndSessionCaseIdAndStatus(caseId, PENDING)){
+            gameSessions.add(modelMapper.map(g, GameSessionOut.class));
+        }
+        return gameSessions;
     }
 
 
@@ -280,8 +285,8 @@ public class GameSessionService {
                 gameSession.getOwner().getEmail(),
                 "🎉 New Detective Joined Your Session!",
                 "Hey Chief Detective " + gameSession.getOwner().getName() + "! 🕵️\n\n" +
-                        "A new detective has joined your investigation team! 🎉\n\n" +
-                        "👤 Detective Info:\n" +
+                        "A detective has accepted the assignment and joined your case. \uD83D\uDCC2\n\n" +
+                        "👤 Detective:\n" +
                         "📛 Name: " + player.getName() + "\n" +
                         "🏷️ Username: " + player.getUsername() + "\n\n" +
                         "💪 Your squad is getting stronger.\n" +

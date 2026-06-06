@@ -186,18 +186,22 @@ public class SolutionProposalService {
     private void notifyPlayersCorrectSolution(GameSession gameSession, SolutionProposal proposal, Integer totalScore, Integer playerScore, List<SessionPlayer> joinedPlayers) {
         for (SessionPlayer s : joinedPlayers) {
             Player player = s.getPlayer();
+
             emailService.send(
                     player.getEmail(),
-                    "Red Thread Game Result - Case Solved",
-                    "Dear " + player.getName() + ",\n\n" +
-                            "Your team solved the case successfully.\n\n" +
-                            "Case: " + gameSession.getSessionCase().getTitle() + "\n" +
-                            "Accused suspect: " + proposal.getSuspect().getName() + "\n" +
-                            "Final session score: " + totalScore + "\n" +
-                            "Your earned score: " + playerScore + "\n" +
-                            "Ended at: " + gameSession.getEndedAt() + "\n\n" +
-                            "Great detective work.\n\n" +
-                            "Red Thread Game Team"
+                    "🏆 Case Closed Successfully!",
+                    "🎉 Congratulations Detective " + player.getName() + "! 🎉\n\n" +
+                            "The case has been solved successfully! 🕵️\n\n" +
+                            "📂 Case: " + gameSession.getSessionCase().getTitle() + "\n" +
+                            "😈 Culprit Identified: " + proposal.getSuspect().getName() + "\n" +
+                            "⭐ Team Score: " + totalScore + "\n" +
+                            "🏅 Your Score: " + playerScore + "\n" +
+                            "⏰ Investigation Closed: " + gameSession.getEndedAt() + "\n\n" +
+                            "🔍 Excellent detective work!\n" +
+                            "🧩 Every clue mattered.\n" +
+                            "🎯 Justice has been served.\n\n" +
+                            "See you in the next mystery! 🚨\n\n" +
+                            "🧵 Red Thread Team"
             );
         }
     }
@@ -205,18 +209,22 @@ public class SolutionProposalService {
     private void notifyPlayersWrongSolution(GameSession gameSession, SolutionProposal proposal, List<SessionPlayer> joinedPlayers) {
         for (SessionPlayer s : joinedPlayers) {
             Player player = s.getPlayer();
+
             emailService.send(
                     player.getEmail(),
-                    "Red Thread Game Result - Case Failed",
-                    "Dear " + player.getName() + ",\n\n" +
-                            "Your team submitted a wrong solution.\n\n" +
-                            "Case: " + gameSession.getSessionCase().getTitle() + "\n" +
-                            "Accused suspect: " + proposal.getSuspect().getName() + "\n" +
-                            "Final session score: 0\n" +
-                            "Your earned score: 0\n" +
-                            "Ended at: " + gameSession.getEndedAt() + "\n\n" +
-                            "Better luck next investigation.\n\n" +
-                            "Red Thread Game Team"
+                    "🚨 Investigation Failed",
+                    "Detective " + player.getName() + ",\n\n" +
+                            "❌ Case Status: FAILED\n\n" +
+                            "📂 Case File: " + gameSession.getSessionCase().getTitle() + "\n" +
+                            "🎭 Suspect Accused: " + proposal.getSuspect().getName() + "\n" +
+                            "🏆 Team Score: 0\n" +
+                            "⭐ Your Score: 0\n\n" +
+                            "The evidence didn't lead to the correct suspect.\n" +
+                            "😈 The real culprit has escaped justice.\n\n" +
+                            "🧠 Review the clues more carefully next time.\n" +
+                            "🔍 Every detail matters in an investigation.\n\n" +
+                            "Better luck on your next case, Detective! 🕵️‍♀️\n\n" +
+                            "🧵 Red Thread Investigation Department"
             );
         }
     }
